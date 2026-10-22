@@ -82,7 +82,7 @@
             <!-- ESTADO DE EXTRAE FOTO -->
             <div id="scraping-status" class="hidden bg-zinc-800/60 border border-zinc-700/50 p-3 rounded-2xl text-xs text-zinc-300 flex items-center gap-3">
                 <div class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin shrink-0"></div>
-                <span id="scraping-text">Obteniendo foto e información de Vinted...</span>
+                <span id="scraping-text">Buscando automáticamente la foto real de Vinted...</span>
             </div>
 
             <!-- VISTA PREVIA DE LA IMAGEN ENCONTRADA -->
@@ -114,7 +114,7 @@
 
                 <div class="pt-2 flex gap-3">
                     <button type="button" onclick="closeAddModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium py-3 rounded-xl text-sm transition">Cancelar</button>
-                    <button type="submit" id="save-btn" class="flex-1 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold py-3 rounded-xl text-sm transition shadow-sm">Guardar Prenda</button>
+                    <button type="submit" id="save-btn" disabled class="flex-1 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold py-3 rounded-xl text-sm transition shadow-sm opacity-40 cursor-not-allowed">Esperando foto automática...</button>
                 </div>
             </form>
         </div>
@@ -200,6 +200,13 @@
         let db;
         let currentFolderId = null;
         let activeEditingItem = null;
+        let activeScrapeRequestId = 0;
+        let urlInputDebounce = null;
+
+        // La lógica JavaScript del navegador está integrada en este index.html.
+        // El Worker NO se puede incrustar aquí: debe ejecutarse en un servidor para consultar Vinted.
+        // Después de desplegar vinted-image-worker.js, pega aquí la URL real que te asigne Cloudflare.
+        const VINTED_METADATA_WORKER = 'https://vinted-image-worker.marcos2005murillo.workers.dev';
 
         function initAppDatabase() {
             const request = indexedDB.open('VintedArmarioAppDB_v25', 1);
@@ -426,22 +433,21 @@
         }
 
         async function openAddModal(prefillUrl = '', prefillTitle = '') {
+            activeScrapeRequestId++;
             document.getElementById('add-modal').classList.remove('hidden');
             document.getElementById('item-url').value = prefillUrl;
             document.getElementById('item-image-url').value = '';
+            document.getElementById('image-preview').removeAttribute('src');
             document.getElementById('image-preview-container').classList.add('hidden');
+            document.getElementById('scraping-status').classList.add('hidden');
+            setAddSaveState(false, 'Esperando foto automática...');
 
-            // Título preliminar limpio desde la URL
             let smartTitle = prefillTitle;
-            if (!smartTitle && prefillUrl) {
-                smartTitle = generateTitleFromUrl(prefillUrl);
-            }
+            if (!smartTitle && prefillUrl) smartTitle = generateTitleFromUrl(prefillUrl);
             document.getElementById('item-title').value = smartTitle || 'Prenda de Vinted';
 
             await updateFolderSelects();
-            if (currentFolderId) {
-                document.getElementById('item-folder').value = currentFolderId;
-            }
+            if (currentFolderId) document.getElementById('item-folder').value = currentFolderId;
 
             if (prefillUrl) {
                 fetchRealVintedData(prefillUrl);
@@ -469,6 +475,8 @@
         }
 
         function closeAddModal() {
+            activeScrapeRequestId++;
+            if (urlInputDebounce) clearTimeout(urlInputDebounce);
             document.getElementById('add-modal').classList.add('hidden');
             document.getElementById('scraping-status').classList.add('hidden');
         }
@@ -499,73 +507,243 @@
             });
         }
 
-        // FUNCIÓN CLAVE: DESCARGA LA IMAGEN REAL CON PROXIES COMPATIBLES CON VINTED
-        async function fetchRealVintedData(url) {
+        function setAddSaveState(enabled, label) {
+            const button = document.getElementById('save-btn');
+            button.disabled = !enabled;
+            button.textContent = label || (enabled ? 'Guardar Prenda' : 'Esperando foto automática...');
+            button.classList.toggle('opacity-40', !enabled);
+            button.classList.toggle('cursor-not-allowed', !enabled);
+        }
+
+        function isVintedListingUrl(value) {
+            try {
+                const u = new URL(value);
+                const supportedHost = /^([a-z0-9-]+\.)?vinted\.(es|com|fr|it|pt|de|nl|be|pl|co\.uk|at|ch|lu|cz|sk|hu|lt|lv|ee|se|dk|fi|gr|ro|bg|hr|si)$/i.test(u.hostname);
+                return u.protocol === 'https:' && supportedHost && /\/items?\//i.test(u.pathname);
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function isVintedImageUrl(value) {
+            try {
+                const u = new URL(value);
+                return u.protocol === 'https:' && /^images\d*\.vinted\.net$/i.test(u.hostname);
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function waitForImageToLoad(url, timeoutMs = 10000) {
+            return new Promise((resolve, reject) => {
+                const image = new Image();
+                let finished = false;
+                const timer = setTimeout(() => finish(new Error('La imagen ha tardado demasiado')), timeoutMs);
+                function finish(error) {
+                    if (finished) return;
+                    finished = true;
+                    clearTimeout(timer);
+                    image.onload = null;
+                    image.onerror = null;
+                    error ? reject(error) : resolve(true);
+                }
+                image.onload = () => finish();
+                image.onerror = () => finish(new Error('La imagen no se puede cargar'));
+                image.src = url;
+            });
+        }
+
+        function extractMetadataFromHtml(html) {
+            if (typeof html !== 'string' || !html.trim()) throw new Error('Vinted no devolvió HTML');
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const readMeta = (selectors) => {
+                for (const selector of selectors) {
+                    const element = doc.querySelector(selector);
+                    if (element) {
+                        const value = element.getAttribute('content');
+                        if (value) return value.trim();
+                    }
+                }
+                return '';
+            };
+
+            let image = readMeta([
+                'meta[property="og:image:secure_url"]',
+                'meta[property="og:image"]',
+                'meta[name="twitter:image"]'
+            ]).replace(/&amp;/g, '&');
+            let title = readMeta(['meta[property="og:title"]', 'meta[name="twitter:title"]']);
+
+            // Alternativa cuando Vinted incluye los datos de la prenda en JSON-LD.
+            if (!image) {
+                const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+                for (const script of scripts) {
+                    try {
+                        const json = JSON.parse(script.textContent || 'null');
+                        const stack = Array.isArray(json) ? [...json] : [json];
+                        while (stack.length) {
+                            const node = stack.pop();
+                            if (!node || typeof node !== 'object') continue;
+                            if (Array.isArray(node)) { stack.push(...node); continue; }
+                            const types = Array.isArray(node['@type']) ? node['@type'] : [node['@type']];
+                            if (!title && typeof node.name === 'string') title = node.name;
+                            if (types.some(t => String(t || '').toLowerCase() === 'product') && node.image) {
+                                const candidate = Array.isArray(node.image) ? node.image[0] : node.image;
+                                image = typeof candidate === 'string' ? candidate : (candidate.url || candidate.contentUrl || '');
+                                if (image) break;
+                            }
+                            for (const value of Object.values(node)) {
+                                if (value && typeof value === 'object') stack.push(value);
+                            }
+                        }
+                    } catch (_) {}
+                    if (image) break;
+                }
+            }
+
+            image = String(image || '').replace(/&amp;/g, '&').trim();
+            if (image.startsWith('//')) image = 'https:' + image;
+            if (!isVintedImageUrl(image)) throw new Error('El HTML no incluye una foto auténtica de la prenda');
+            return { image, title: String(title || '').trim() };
+        }
+
+        async function fetchHtmlThroughProxy(proxyUrl, responseMode = 'text') {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 12000);
+            try {
+                const response = await fetch(proxyUrl, { signal: controller.signal, cache: 'no-store' });
+                if (!response.ok) throw new Error('El proxy respondió con error ' + response.status);
+                if (responseMode === 'allorigins') {
+                    const data = await response.json();
+                    if (!data || typeof data.contents !== 'string') throw new Error('Respuesta vacía del proxy');
+                    return data.contents;
+                }
+                return await response.text();
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        async function getMetadataFromWorker(url) {
+            if (!VINTED_METADATA_WORKER) throw new Error('Worker no configurado');
+            const endpoint = new URL(VINTED_METADATA_WORKER);
+            endpoint.searchParams.set('url', url);
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 14000);
+            try {
+                const response = await fetch(endpoint.toString(), { signal: controller.signal, cache: 'no-store' });
+                const data = await response.json();
+                if (!response.ok || !data || !data.image) {
+                    throw new Error((data && data.error) || 'El servicio no encontró la foto');
+                }
+                if (!isVintedImageUrl(data.image)) throw new Error('El servicio devolvió una imagen no válida');
+                return { image: data.image, title: String(data.title || '').trim() };
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        async function getMetadataFromPublicProxies(url) {
+            const sources = [
+                () => fetchHtmlThroughProxy(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, 'allorigins'),
+                () => fetchHtmlThroughProxy(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, 'text')
+            ];
+            const failures = [];
+            for (const getHtml of sources) {
+                try {
+                    const html = await getHtml();
+                    return extractMetadataFromHtml(html);
+                } catch (error) {
+                    failures.push(error);
+                }
+            }
+            throw new AggregateError(failures, 'Los proxies públicos no han podido extraer la foto');
+        }
+
+        // Busca y valida automáticamente una foto real. Nunca asigna una imagen genérica.
+        async function fetchRealVintedData(rawUrl) {
+            const url = String(rawUrl || '').trim();
+            const requestId = ++activeScrapeRequestId;
             const statusBox = document.getElementById('scraping-status');
             const statusText = document.getElementById('scraping-text');
             const previewContainer = document.getElementById('image-preview-container');
             const previewImg = document.getElementById('image-preview');
+            const imageInput = document.getElementById('item-image-url');
 
+            imageInput.value = '';
+            previewImg.removeAttribute('src');
+            previewContainer.classList.add('hidden');
+            setAddSaveState(false, 'Buscando foto automática...');
+
+            if (!url) {
+                statusBox.classList.add('hidden');
+                return;
+            }
             statusBox.classList.remove('hidden');
-            statusText.textContent = "Obteniendo foto de Vinted...";
+            if (!isVintedListingUrl(url)) {
+                statusText.textContent = 'Pega un enlace válido a un anuncio de Vinted.';
+                setAddSaveState(false, 'Enlace de Vinted no válido');
+                return;
+            }
 
-            let imageUrl = '';
-            let scrapedTitle = '';
+            statusText.textContent = VINTED_METADATA_WORKER
+                ? 'Buscando la foto en Vinted y verificando que carga...'
+                : 'Buscando la foto automáticamente. Para más fiabilidad, configura el Worker incluido...';
 
-            // Petición paralela a los dos proxies más fiables
-            const proxy1 = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-            const proxy2 = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
+            const attempts = [];
+            if (VINTED_METADATA_WORKER) attempts.push(() => getMetadataFromWorker(url));
+            // Se intentan también por separado para pasar al siguiente origen si la primera imagen no carga.
+            attempts.push(async () => extractMetadataFromHtml(await fetchHtmlThroughProxy(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, 'allorigins')));
+            attempts.push(async () => extractMetadataFromHtml(await fetchHtmlThroughProxy(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, 'text')));
 
             try {
-                const response = await Promise.any([
-                    fetch(proxy1).then(res => res.json()).then(data => data.contents),
-                    fetch(proxy2).then(res => res.text())
-                ]);
+                // Cada origen debe entregar una imagen de Vinted que además cargue correctamente.
+                const metadata = await Promise.any(attempts.map(async (getMetadata) => {
+                    const result = await getMetadata();
+                    if (!isVintedImageUrl(result.image)) throw new Error('La dirección no pertenece al servidor de imágenes de Vinted');
+                    await waitForImageToLoad(result.image, 10000);
+                    return result;
+                }));
+                // Evita que una respuesta antigua pise la importación que el usuario acaba de iniciar.
+                if (requestId !== activeScrapeRequestId) return;
 
-                if (response) {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(response, 'text/html');
-
-                    const ogImage = doc.querySelector('meta[property="og:image"]');
-                    const ogTitle = doc.querySelector('meta[property="og:title"]');
-
-                    if (ogImage && ogImage.content) {
-                        imageUrl = ogImage.content;
-                    }
-                    if (ogTitle && ogTitle.content) {
-                        scrapedTitle = ogTitle.content;
-                    }
-                }
-            } catch (e) {
-                console.log("Servidor proxy ocupado, buscando imagen directa...");
-            }
-
-            // Aplicar los datos extraídos
-            if (imageUrl) {
-                document.getElementById('item-image-url').value = imageUrl;
-                previewImg.src = imageUrl;
+                imageInput.value = metadata.image;
+                previewImg.src = metadata.image;
                 previewContainer.classList.remove('hidden');
-                statusText.textContent = "¡Foto obtenida con éxito!";
-            } else {
-                // Fallback con imagen de alta calidad
-                const fallbackImg = "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&q=80&w=600";
-                document.getElementById('item-image-url').value = fallbackImg;
-                statusText.textContent = "Listo para guardar.";
-            }
+                statusText.textContent = 'Foto real obtenida y verificada. Ya puedes guardar la prenda.';
+                setAddSaveState(true, 'Guardar Prenda');
 
-            if (scrapedTitle && (document.getElementById('item-title').value === 'Prenda de Vinted' || !document.getElementById('item-title').value)) {
-                document.getElementById('item-title').value = scrapedTitle;
+                const titleInput = document.getElementById('item-title');
+                const oldAutoTitle = generateTitleFromUrl(url);
+                if (metadata.title && (!titleInput.value.trim() || titleInput.value === 'Prenda de Vinted' || titleInput.value === oldAutoTitle)) {
+                    titleInput.value = metadata.title;
+                }
+            } catch (error) {
+                if (requestId !== activeScrapeRequestId) return;
+                console.error('No se pudo obtener automáticamente la foto de Vinted:', error);
+                imageInput.value = '';
+                previewContainer.classList.add('hidden');
+                statusText.textContent = 'No se pudo obtener y validar automáticamente la foto. No se guardará una imagen genérica; vuelve a intentarlo más tarde o comprueba el enlace.';
+                setAddSaveState(false, 'Foto automática no disponible');
             }
-
-            setTimeout(() => statusBox.classList.add('hidden'), 2000);
         }
 
         function handleAddItem(e) {
             e.preventDefault();
-            const url = document.getElementById('item-url').value;
-            const title = document.getElementById('item-title').value;
-            const folderId = parseInt(document.getElementById('item-folder').value);
-            let image = document.getElementById('item-image-url').value || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&q=80&w=600";
+            const url = document.getElementById('item-url').value.trim();
+            const title = document.getElementById('item-title').value.trim();
+            const folderId = parseInt(document.getElementById('item-folder').value, 10);
+            const image = document.getElementById('item-image-url').value;
+
+            if (!isVintedListingUrl(url) || !isVintedImageUrl(image)) {
+                alert('No se puede guardar todavía: la aplicación necesita obtener y verificar automáticamente la foto real de Vinted.');
+                if (url) fetchRealVintedData(url);
+                return;
+            }
+            if (!db || !Number.isFinite(folderId)) {
+                alert('No se ha podido acceder a la base de datos o a una carpeta. Recarga la página e inténtalo de nuevo.');
+                return;
+            }
 
             const tx = db.transaction('items', 'readwrite');
             const store = tx.objectStore('items');
@@ -575,7 +753,26 @@
                 closeAddModal();
                 goHome();
             };
+            req.onerror = () => alert('No se ha podido guardar la prenda. Comprueba el almacenamiento del navegador.');
         }
+
+        // También intenta la extracción automática si el enlace se pega/escribe manualmente.
+        document.getElementById('item-url').addEventListener('input', () => {
+            activeScrapeRequestId++;
+            if (urlInputDebounce) clearTimeout(urlInputDebounce);
+            document.getElementById('item-image-url').value = '';
+            document.getElementById('image-preview').removeAttribute('src');
+            document.getElementById('image-preview-container').classList.add('hidden');
+            setAddSaveState(false, 'Esperando foto automática...');
+            const value = document.getElementById('item-url').value.trim();
+            if (!value) {
+                document.getElementById('scraping-status').classList.add('hidden');
+                return;
+            }
+            document.getElementById('scraping-status').classList.remove('hidden');
+            document.getElementById('scraping-text').textContent = 'Enlace detectado. Iniciando búsqueda automática...';
+            urlInputDebounce = setTimeout(() => fetchRealVintedData(value), 800);
+        });
 
         async function openItemDetailModal(item) {
             activeEditingItem = item;
