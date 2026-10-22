@@ -297,7 +297,7 @@
       }
     });
 
-    // DETECCIÓN DEL ATAJO Y EXTRACCIÓN AUTOMÁTICA DE LA FOTO REAL
+    // DETECCIÓN DEL ATAJO Y EXTRACCIÓN AUTOMÁTICA
     function checkIncomingUrl() {
       try {
         const urlParams = new URLSearchParams(window.location.search);
@@ -314,6 +314,15 @@
       } catch (err) {
         console.error("Error al procesar la URL recibida", err);
       }
+    }
+
+    function setPreviewImage(imgUrl) {
+      const previewImg = document.getElementById('modalImagePreview');
+      const loadingText = document.getElementById('previewLoadingText');
+      state.currentImageBase64 = imgUrl;
+      previewImg.src = imgUrl;
+      previewImg.classList.remove('hidden');
+      loadingText.classList.add('hidden');
     }
 
     function openItemModalWithUrl(url) {
@@ -348,25 +357,37 @@
       populateSelect();
       itemModal.classList.remove('hidden');
 
-      // 2. Extraer foto oficial usando la tecnología Proxy de Microlink
+      // 2. Extracción multicanal con redundancia (Fallback en cascada)
       if (url) {
-        const apiUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
-        fetch(apiUrl)
+        const proxy1 = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
+
+        fetch(proxy1)
           .then(res => res.json())
           .then(data => {
-            if (data.status === 'success' && data.data.image) {
-              const imgUrl = data.data.image.url;
-              state.currentImageBase64 = imgUrl;
-              previewImg.src = imgUrl;
-              previewImg.classList.remove('hidden');
-              loadingText.classList.add('hidden');
+            if (data.status === 'success' && data.data && data.data.image && data.data.image.url) {
+              setPreviewImage(data.data.image.url);
             } else {
-              loadingText.textContent = 'No se pudo cargar la foto automáticamente';
+              throw new Error("Microlink no devolvió imagen");
             }
           })
-          .catch(err => {
-            console.error("Error extrayendo foto de Vinted:", err);
-            loadingText.textContent = 'Error al cargar foto';
+          .catch(() => {
+            // Servidor secundario: AllOrigins
+            const proxy2 = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+            fetch(proxy2)
+              .then(res => res.json())
+              .then(data => {
+                if (data && data.contents) {
+                  const match = data.contents.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
+                  if (match && match[1]) {
+                    setPreviewImage(match[1]);
+                    return;
+                  }
+                }
+                throw new Error("OG image no encontrada");
+              })
+              .catch(() => {
+                loadingText.textContent = 'No se pudo obtener la foto automáticamente';
+              });
           });
       }
     }
