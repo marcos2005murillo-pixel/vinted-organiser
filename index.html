@@ -189,14 +189,14 @@
         </div>
     </div>
 
-    <!-- SCRIPT CORREGIDO SIN ERRORES DE ÍNDICES -->
+    <!-- SCRIPT CON EXTRACCIÓN INTELIGENTE DESDE LA URL -->
     <script>
         let db;
         let currentFolderId = null;
         let activeEditingItem = null;
 
         function initAppDatabase() {
-            const request = indexedDB.open('VintedArmarioAppDB_v22', 1);
+            const request = indexedDB.open('VintedArmarioAppDB_v23', 1);
 
             request.onerror = (e) => console.error("Error DB:", e);
 
@@ -245,7 +245,7 @@
             if (rawShare) {
                 const shareUrl = extractFirstUrl(rawShare);
                 if (shareUrl) {
-                    openAddModal(shareUrl, shareTitle || 'Nueva prenda de Vinted');
+                    openAddModal(shareUrl, shareTitle || '');
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
             }
@@ -422,8 +422,14 @@
         async function openAddModal(prefillUrl = '', prefillTitle = '') {
             document.getElementById('add-modal').classList.remove('hidden');
             document.getElementById('item-url').value = prefillUrl;
-            document.getElementById('item-title').value = prefillTitle;
             document.getElementById('item-image-url').value = '';
+
+            // EXTRAER TÍTULO INTELIGENTE DESDE LA URL DIRECTAMENTE
+            let smartTitle = prefillTitle;
+            if (!smartTitle && prefillUrl) {
+                smartTitle = generateTitleFromUrl(prefillUrl);
+            }
+            document.getElementById('item-title').value = smartTitle || 'Prenda de Vinted';
 
             await updateFolderSelects();
             if (currentFolderId) {
@@ -435,6 +441,24 @@
             } else {
                 document.getElementById('item-url').focus();
             }
+        }
+
+        function generateTitleFromUrl(url) {
+            try {
+                const urlObj = new URL(url);
+                const segments = urlObj.pathname.split('/').filter(Boolean);
+                const lastSegment = segments[segments.length - 1]; // ej. "5176378975-chaussure-gucci-homme"
+                if (lastSegment) {
+                    let namePart = lastSegment.replace(/^\d+[-_]?/, ''); // Quita los números de ID iniciales
+                    if (namePart) {
+                        namePart = namePart.replace(/[-_]/g, ' ');
+                        return namePart.split(' ')
+                            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                            .join(' ');
+                    }
+                }
+            } catch (e) {}
+            return 'Prenda de Vinted';
         }
 
         function closeAddModal() {
@@ -472,10 +496,12 @@
             const statusBox = document.getElementById('scraping-status');
             const statusText = document.getElementById('scraping-text');
             statusBox.classList.remove('hidden');
-            statusText.textContent = "Extrayendo imagen de Vinted...";
+            statusText.textContent = "Buscando imagen de la prenda...";
 
             let imageUrl = '';
+            // Añadido corsproxy.io para mejorar el éxito frente a Cloudflare
             const proxies = [
+                `https://corsproxy.io/?${encodeURIComponent(url)}`,
                 `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
                 `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
             ];
@@ -490,8 +516,10 @@
                     const ogImage = doc.querySelector('meta[property="og:image"]');
                     const ogTitle = doc.querySelector('meta[property="og:title"]');
 
-                    if (ogImage && ogImage.content) imageUrl = ogImage.content;
-                    if (ogTitle && (!document.getElementById('item-title').value || document.getElementById('item-title').value === 'Nueva prenda de Vinted')) {
+                    if (ogImage && ogImage.content) {
+                        imageUrl = ogImage.content;
+                    }
+                    if (ogTitle && ogTitle.content && document.getElementById('item-title').value === 'Prenda de Vinted') {
                         document.getElementById('item-title').value = ogTitle.content;
                     }
                     if (imageUrl) break;
@@ -500,13 +528,14 @@
 
             if (imageUrl) {
                 document.getElementById('item-image-url').value = imageUrl;
-                statusText.textContent = "¡Imagen extraída con éxito!";
+                statusText.textContent = "¡Imagen obtenida con éxito!";
             } else {
-                document.getElementById('item-image-url').value = "https://placehold.co/600x800/18181b/71717a?text=Vinted";
-                statusText.textContent = "Guardando con miniatura estándar.";
+                // Fallback elegante con la primera letra o placeholder personalizado
+                document.getElementById('item-image-url').value = "https://placehold.co/600x800/18181b/ffffff?text=Vinted+Item";
+                statusText.textContent = "Imagen genérica aplicada.";
             }
 
-            setTimeout(() => statusBox.classList.add('hidden'), 2500);
+            setTimeout(() => statusBox.classList.add('hidden'), 2000);
         }
 
         function handleAddItem(e) {
@@ -514,7 +543,7 @@
             const url = document.getElementById('item-url').value;
             const title = document.getElementById('item-title').value;
             const folderId = parseInt(document.getElementById('item-folder').value);
-            let image = document.getElementById('item-image-url').value || "https://placehold.co/600x800/18181b/71717a?text=Vinted";
+            let image = document.getElementById('item-image-url').value || "https://placehold.co/600x800/18181b/ffffff?text=Vinted+Item";
 
             const tx = db.transaction('items', 'readwrite');
             const store = tx.objectStore('items');
