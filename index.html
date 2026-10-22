@@ -177,7 +177,7 @@
       <h3 class="text-base font-bold text-slate-800 mb-3">Guardar Prenda</h3>
 
       <div id="modalImagePreviewContainer" class="hidden mb-3 h-44 w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center relative">
-        <span id="previewLoadingText" class="text-xs text-slate-400 font-medium">Cargando foto de Vinted...</span>
+        <span id="previewLoadingText" class="text-xs text-slate-400 font-medium">Obteniendo imagen...</span>
         <img id="modalImagePreview" src="" class="w-full h-full object-cover hidden">
       </div>
 
@@ -219,7 +219,6 @@
     const itemsGrid = document.getElementById('itemsGrid');
     const emptyState = document.getElementById('emptyState');
 
-    // Inicializar IndexedDB
     function initDB() {
       return new Promise((resolve, reject) => {
         const request = indexedDB.open('VintedOrganiserDB', 1);
@@ -297,7 +296,6 @@
       }
     });
 
-    // DETECCIÓN DEL ATAJO Y EXTRACCIÓN AUTOMÁTICA
     function checkIncomingUrl() {
       try {
         const urlParams = new URLSearchParams(window.location.search);
@@ -337,59 +335,66 @@
       previewContainer.classList.remove('hidden');
       previewImg.classList.add('hidden');
       loadingText.classList.remove('hidden');
-      loadingText.textContent = 'Cargando foto de Vinted...';
+      loadingText.textContent = 'Buscando foto del anuncio...';
 
-      // 1. Autogenerar título limpio desde el slug
+      // 1. Extraer ID del artículo y Slug
+      let itemId = '';
       let suggestedName = "Prenda Vinted";
+
       try {
         const urlObj = new URL(url);
         const pathSegments = urlObj.pathname.split('/');
-        const lastSegment = pathSegments.filter(Boolean).pop();
-        if (lastSegment) {
-          let nameClean = lastSegment.replace(/^\d+-/, '').replace(/-/g, ' ');
+        const lastSegment = pathSegments.filter(Boolean).pop() || '';
+        
+        // Extraer ID numérico
+        const idMatch = lastSegment.match(/^(\d+)/);
+        if (idMatch) itemId = idMatch[1];
+
+        // Nombre sugerido
+        let nameClean = lastSegment.replace(/^\d+-/, '').replace(/-/g, ' ');
+        if (nameClean) {
           suggestedName = nameClean.charAt(0).toUpperCase() + nameClean.slice(1);
         }
       } catch (e) {
-        console.log("No se pudo extraer el nombre automáticamente");
+        console.log("Error al parsear URL");
       }
-      document.getElementById('itemNameInput').value = suggestedName;
 
+      document.getElementById('itemNameInput').value = suggestedName;
       populateSelect();
       itemModal.classList.remove('hidden');
 
-      // 2. Extracción multicanal con redundancia (Fallback en cascada)
-      if (url) {
-        const proxy1 = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
+      if (!url) return;
 
-        fetch(proxy1)
-          .then(res => res.json())
-          .then(data => {
-            if (data.status === 'success' && data.data && data.data.image && data.data.image.url) {
-              setPreviewImage(data.data.image.url);
-            } else {
-              throw new Error("Microlink no devolvió imagen");
-            }
-          })
-          .catch(() => {
-            // Servidor secundario: AllOrigins
-            const proxy2 = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-            fetch(proxy2)
-              .then(res => res.json())
-              .then(data => {
-                if (data && data.contents) {
-                  const match = data.contents.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
-                  if (match && match[1]) {
-                    setPreviewImage(match[1]);
-                    return;
-                  }
-                }
-                throw new Error("OG image no encontrada");
-              })
-              .catch(() => {
-                loadingText.textContent = 'No se pudo obtener la foto automáticamente';
-              });
-          });
-      }
+      // 2. Método Robusto: Usar API o CDN directo
+      const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}&filter=image`;
+
+      fetch(microlinkUrl)
+        .then(r => r.json())
+        .then(res => {
+          if (res && res.data && res.data.image && res.data.image.url) {
+            setPreviewImage(res.data.image.url);
+          } else {
+            throw new Error('Microlink sin imagen');
+          }
+        })
+        .catch(() => {
+          // Fallback vía JSONP Proxy seguro a metatags
+          const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
+          fetch(proxyUrl)
+            .then(r => r.text())
+            .then(html => {
+              const match = html.match(/property=["']og:image["']\s+content=["']([^"']+)["']/i) ||
+                            html.match(/content=["']([^"']+)["']\s+property=["']og:image["']/i);
+              if (match && match[1]) {
+                setPreviewImage(match[1]);
+              } else {
+                loadingText.textContent = 'Prenda guardada (foto no disponible por Vinted)';
+              }
+            })
+            .catch(() => {
+              loadingText.textContent = 'Prenda lista para guardar';
+            });
+        });
     }
 
     function render() {
