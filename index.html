@@ -694,6 +694,27 @@
             }
         }
 
+        // Reintenta automáticamente el Worker ante errores transitorios (por ejemplo, 429/5xx).
+        // La caché de Cloudflare se mantiene en el Worker; no se modifica desde el navegador.
+        async function getMetadataFromWorkerWithRetry(url, maxAttempts = 2) {
+            let lastError;
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                try {
+                    const result = await getMetadataFromWorker(url);
+                    if (!isAppImageUrl(result.image)) throw new Error('La dirección de imagen no es válida para la aplicación');
+                    // Reintenta también si el propio proxy de imagen falla al cargar, no solo si falla el JSON.
+                    await waitForImageToLoad(result.image, 9000);
+                    return { ...result, _imageVerified: true };
+                } catch (error) {
+                    lastError = error;
+                    if (attempt < maxAttempts) {
+                        await new Promise(resolve => setTimeout(resolve, 900));
+                    }
+                }
+            }
+            throw lastError || new Error('El Worker no ha podido obtener la foto.');
+        }
+
         async function getMetadataFromPublicProxies(url) {
             const sources = [
                 () => fetchHtmlThroughProxy(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, 'allorigins'),
@@ -738,11 +759,11 @@
             }
 
             statusText.textContent = VINTED_METADATA_WORKER
-                ? 'Buscando la foto en Vinted y verificando que carga...'
+                ? 'Buscando la foto en Vinted. Si el Worker falla, se reintentará automáticamente...'
                 : 'Buscando la foto automáticamente. Para más fiabilidad, configura el Worker incluido...';
 
             const attempts = [];
-            if (VINTED_METADATA_WORKER) attempts.push(() => getMetadataFromWorker(url));
+            if (VINTED_METADATA_WORKER) attempts.push(() => getMetadataFromWorkerWithRetry(url));
             // Se intentan también por separado para pasar al siguiente origen si la primera imagen no carga.
             attempts.push(async () => extractMetadataFromHtml(await fetchHtmlThroughProxy(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, 'allorigins')));
             attempts.push(async () => extractMetadataFromHtml(await fetchHtmlThroughProxy(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, 'text')));
@@ -752,8 +773,8 @@
                 const metadata = await Promise.any(attempts.map(async (getMetadata) => {
                     const result = await getMetadata();
                     if (!isAppImageUrl(result.image)) throw new Error('La dirección de imagen no es válida para la aplicación');
-                    await waitForImageToLoad(result.image, 10000);
-                    return result;
+                    if (!result._imageVerified) await waitForImageToLoad(result.image, 10000);
+                    return { image: result.image, title: result.title };
                 }));
                 // Evita que una respuesta antigua pise la importación que el usuario acaba de iniciar.
                 if (requestId !== activeScrapeRequestId) return;
@@ -776,7 +797,7 @@
                 previewContainer.classList.add('hidden');
                 const scrapeErrors = error instanceof AggregateError ? (error.errors || []) : [error];
                 const scrapeDetails = [...new Set(scrapeErrors.map(e => String(e && e.message || e)).filter(Boolean))].slice(0, 2).join(' · ');
-                statusText.textContent = 'No se pudo obtener la foto real automáticamente. ' + (scrapeDetails ? ('Detalle: ' + scrapeDetails.slice(0, 260) + '. ') : '') + 'No se guardará una imagen genérica.';
+                statusText.textContent = 'No se pudo obtener la foto real automáticamente tras los reintentos. ' + (scrapeDetails ? ('Detalle: ' + scrapeDetails.slice(0, 260) + '. ') : '') + 'Puedes volver a intentarlo; no se guardará una imagen genérica.';
                 setAddSaveState(false, 'Foto automática no disponible');
             }
         }
