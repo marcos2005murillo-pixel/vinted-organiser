@@ -553,8 +553,28 @@
             });
         }
 
+        function extractEmbeddedVintedImageUrl(html) {
+            // Algunas versiones de Vinted dejan las fotos dentro de JSON incrustado en scripts.
+            // Normalizamos las barras escapadas y las entidades sin ejecutar ese JavaScript.
+            const normalized = String(html || '')
+                .replace(/&amp;/gi, '&')
+                .replace(/\\u002f/gi, '/')
+                .replace(/\\u003a/gi, ':')
+                .replace(/\\u0026/gi, '&')
+                .replace(/\\\//g, '/');
+            const matches = normalized.match(/https?:\/\/images\d*\.vinted\.net\/[^\s"'<>\\]+/gi) || [];
+            for (let raw of matches) {
+                raw = raw.replace(/[),;\]}]+$/g, '').trim();
+                try {
+                    const u = new URL(raw);
+                    if (isVintedImageUrl(u.href) && /\/t\//i.test(u.pathname)) return u.href;
+                } catch (_) {}
+            }
+            return '';
+        }
+
         function extractMetadataFromHtml(html) {
-            if (typeof html !== 'string' || !html.trim()) throw new Error('Vinted no devolvió HTML');
+            if (typeof html !== 'string' || !html.trim()) throw new Error('La fuente no devolvió HTML.');
             const doc = new DOMParser().parseFromString(html, 'text/html');
             const readMeta = (selectors) => {
                 for (const selector of selectors) {
@@ -575,7 +595,7 @@
             let title = readMeta(['meta[property="og:title"]', 'meta[name="twitter:title"]']);
 
             // Alternativa cuando Vinted incluye los datos de la prenda en JSON-LD.
-            if (!image) {
+            if (!isVintedImageUrl(image)) {
                 const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
                 for (const script of scripts) {
                     try {
@@ -589,21 +609,28 @@
                             if (!title && typeof node.name === 'string') title = node.name;
                             if (types.some(t => String(t || '').toLowerCase() === 'product') && node.image) {
                                 const candidate = Array.isArray(node.image) ? node.image[0] : node.image;
-                                image = typeof candidate === 'string' ? candidate : (candidate.url || candidate.contentUrl || '');
-                                if (image) break;
+                                const possible = typeof candidate === 'string' ? candidate : (candidate.url || candidate.contentUrl || '');
+                                if (isVintedImageUrl(possible)) { image = possible; break; }
                             }
                             for (const value of Object.values(node)) {
                                 if (value && typeof value === 'object') stack.push(value);
                             }
                         }
                     } catch (_) {}
-                    if (image) break;
+                    if (isVintedImageUrl(image)) break;
                 }
             }
 
+            // Fallback adicional: localizar URL del CDN de imágenes dentro del HTML completo.
+            if (!isVintedImageUrl(image)) image = extractEmbeddedVintedImageUrl(html);
             image = String(image || '').replace(/&amp;/g, '&').trim();
             if (image.startsWith('//')) image = 'https:' + image;
-            if (!isVintedImageUrl(image)) throw new Error('El HTML no incluye una foto auténtica de la prenda');
+            if (!isVintedImageUrl(image)) {
+                const normalized = String(html).replace(/\\\//g, '/').replace(/\\u002f/gi, '/');
+                const candidates = (normalized.match(/https?:\/\/images\d*\.vinted\.net\//gi) || []).length;
+                const likelyBlocked = /captcha|verify you are human|access denied|temporarily blocked|cloudflare/i.test(normalized);
+                throw new Error(`No se encontró una foto válida en el HTML (fotos Vinted detectadas: ${candidates}; posible bloqueo: ${likelyBlocked ? 'sí' : 'no'}).`);
+            }
             return { image, title: String(title || '').trim() };
         }
 
@@ -723,7 +750,9 @@
                 console.error('No se pudo obtener automáticamente la foto de Vinted:', error);
                 imageInput.value = '';
                 previewContainer.classList.add('hidden');
-                statusText.textContent = 'No se pudo obtener y validar automáticamente la foto. No se guardará una imagen genérica; vuelve a intentarlo más tarde o comprueba el enlace.';
+                const scrapeErrors = error instanceof AggregateError ? (error.errors || []) : [error];
+                const scrapeDetails = [...new Set(scrapeErrors.map(e => String(e && e.message || e)).filter(Boolean))].slice(0, 2).join(' · ');
+                statusText.textContent = 'No se pudo obtener la foto real automáticamente. ' + (scrapeDetails ? ('Detalle: ' + scrapeDetails.slice(0, 260) + '. ') : '') + 'No se guardará una imagen genérica.';
                 setAddSaveState(false, 'Foto automática no disponible');
             }
         }
