@@ -1,275 +1,564 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vinted Organiser</title>
-    <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --accent: #09b1ba; /* Color Vinted */
-            --text: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Vinted Organiser</title>
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
+  <!-- iOS Web App Capability -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Vinted">
 
-        .container {
-            width: 100%;
-            max-width: 480px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+  <!-- Tailwind CSS & Icons CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-        header {
-            text-align: center;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border);
-        }
+  <style>
+    :root {
+      --sat: env(safe-area-inset-top);
+      --sab: env(safe-area-inset-bottom);
+    }
 
-        h1 {
-            font-size: 1.5rem;
-            margin: 0;
-            color: var(--accent);
-        }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--border);
-        }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      background: #f1f5f9;
+      background: linear-gradient(135deg, #e0e7ff 0%, #f1f5f9 40%, #e2e8f0 70%, #f3e8ff 100%);
+      background-attachment: fixed;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      color: #1e293b;
+      user-select: none;
+    }
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
+    .app-container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
 
-        label {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
+    @media (min-width: 768px) {
+      .app-container {
+        height: 92vh;
+        margin: 4vh auto;
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+        flex-direction: row;
+      }
+    }
 
-        input, select {
-            background-color: #0f172a;
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            outline: none;
-        }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      border-radius: 16px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    }
 
-        input:focus, select:focus {
-            border-color: var(--accent);
-        }
+    .btn-primary {
+      background-color: #0d9488;
+      color: white;
+      font-weight: 600;
+      border-radius: 12px;
+      padding: 10px 16px;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
 
-        .preview-box {
-            width: 100%;
-            height: 200px;
-            border-radius: 8px;
-            background-color: #0f172a;
-            border: 1px dashed var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            margin-top: 5px;
-        }
-
-        .preview-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .btn-primary {
-            background-color: var(--accent);
-            color: #ffffff;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: opacity 0.2s;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .btn-primary:active {
-            opacity: 0.8;
-        }
-
-        .status-badge {
-            display: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            text-align: center;
-            margin-bottom: 10px;
-        }
-
-        .status-badge.active {
-            display: block;
-            background-color: rgba(9, 177, 186, 0.15);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-        }
-    </style>
+    ::-webkit-scrollbar { display: none; }
+  </style>
 </head>
-<body>
+<body class="p-0 md:p-6">
 
-<div class="container">
-    <header>
-        <h1>Armario Organiser</h1>
+  <div class="app-container overflow-hidden relative">
+
+    <!-- Mobile Header -->
+    <header class="p-4 pt-10 md:pt-4 border-b border-slate-200/60 flex items-center justify-between bg-white/40 md:hidden">
+      <h1 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+        <i class="fa-solid fa-shirt text-teal-600"></i>
+        <span>Vinted Organiser</span>
+      </h1>
+      <button id="btnMobileAddFolder" class="p-2 text-teal-600 bg-white/80 rounded-xl border border-white text-sm">
+        <i class="fa-solid fa-folder-plus"></i>
+      </button>
     </header>
 
-    <div id="status-banner" class="status-badge">
-        ✨ Enlace importado desde Vinted
+    <!-- Sidebar / Folders -->
+    <aside class="w-full md:w-72 bg-slate-50/50 p-4 border-b md:border-b-0 md:border-r border-slate-200/60 flex flex-col justify-between shrink-0">
+      <div>
+        <div class="hidden md:flex items-center justify-between mb-6 pt-2">
+          <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-shirt text-teal-600"></i>
+            <span>Vinted Organiser</span>
+          </h1>
+        </div>
+
+        <button id="btnOpenNewFolderModal" class="w-full hidden md:flex mb-4 py-2.5 px-4 bg-white/80 text-slate-700 font-semibold text-sm rounded-xl border border-white shadow-sm items-center justify-center gap-2">
+          <i class="fa-solid fa-folder-plus text-teal-600"></i>
+          <span>Nueva Carpeta</span>
+        </button>
+
+        <div class="flex md:flex-col gap-1 overflow-x-auto md:overflow-y-auto pb-2 md:pb-0" id="foldersList">
+          <!-- Dynamic Folders -->
+        </div>
+      </div>
+
+      <div class="mt-2 pt-3 border-t border-slate-200/60 text-xs text-slate-500 flex justify-between items-center">
+        <span id="totalItemsCount">0 Prendas</span>
+      </div>
+    </aside>
+
+    <!-- Main Section -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden p-4">
+
+      <!-- Action Toolbar -->
+      <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between pb-3 border-b border-slate-200/60">
+        <div class="flex items-center justify-between sm:justify-start gap-3">
+          <h2 id="currentFolderTitle" class="text-xl md:text-2xl font-bold text-slate-800">Desperdigadas</h2>
+          <span id="currentFolderBadge" class="text-xs px-2.5 py-1 rounded-full bg-slate-200/80 font-bold text-slate-600">0</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input type="text" id="searchInput" placeholder="Buscar..." class="flex-1 sm:w-48 px-3 py-2 bg-white/80 text-sm rounded-xl border border-white focus:outline-none">
+          <button id="btnOpenNewItemModal" class="btn-primary text-sm shrink-0">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Añadir</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Grid Items -->
+      <div class="flex-1 overflow-y-auto py-4">
+        <div id="itemsGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4"></div>
+
+        <div id="emptyState" class="hidden h-full flex flex-col items-center justify-center text-slate-400 py-12 text-center">
+          <i class="fa-solid fa-box-open text-4xl mb-2 opacity-50"></i>
+          <p class="text-sm font-medium">No hay prendas en esta carpeta</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal Folder -->
+  <div id="folderModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-sm p-5 relative">
+      <h3 class="text-base font-bold text-slate-800 mb-3">Nueva Carpeta</h3>
+      <input type="text" id="folderNameInput" placeholder="Nombre de la carpeta" class="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-sm mb-4">
+      <div class="flex justify-end gap-2">
+        <button id="btnCloseFolderModal" class="px-3 py-2 text-sm font-medium text-slate-600">Cancelar</button>
+        <button id="btnSaveFolder" class="btn-primary text-sm">Guardar</button>
+      </div>
     </div>
+  </div>
 
-    <!-- Formulario de Ingesta / Agregar Prenda -->
-    <div class="card">
-        <form id="prenda-form" onsubmit="guardarPrenda(event)">
-            
-            <div class="form-group">
-                <label for="vinted-url">Enlace de Vinted</label>
-                <input type="url" id="vinted-url" placeholder="https://www.vinted.es/items/..." required readonly>
-            </div>
+  <!-- Modal Item -->
+  <div id="itemModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-sm p-5 relative">
+      <h3 class="text-base font-bold text-slate-800 mb-3">Guardar Prenda</h3>
 
-            <div class="form-group">
-                <label for="prenda-nombre">Nombre de la Prenda</label>
-                <input type="text" id="prenda-nombre" placeholder="Ej: Camiseta Ferrari / Jeans True Religion" required>
-            </div>
+      <div id="modalImagePreviewContainer" class="hidden mb-2 h-36 w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center relative">
+        <img id="modalImagePreview" src="" class="w-full h-full object-cover">
+      </div>
 
-            <div class="form-group">
-                <label for="prenda-carpeta">Carpeta / Armario</label>
-                <select id="prenda-carpeta" required>
-                    <option value="Camisetas">Camisetas</option>
-                    <option value="Pantalones">Pantalones</option>
-                    <option value="Sudaderas">Sudaderas</option>
-                    <option value="Chaquetas">Chaquetas</option>
-                    <option value="Zapatillas">Zapatillas</option>
-                    <option value="Favoritos">Favoritos</option>
-                </select>
-            </div>
+      <button type="button" id="btnPasteClipboard" class="w-full mb-3 py-2.5 px-3 bg-teal-50 hover:bg-teal-100 text-teal-800 font-semibold text-xs rounded-xl border border-teal-200 flex items-center justify-center gap-2 transition-colors">
+        <i class="fa-solid fa-paste text-teal-600"></i>
+        <span>Pegar Foto del Portapapeles</span>
+      </button>
 
-            <div class="form-group">
-                <label>Vista previa de la Prenda</label>
-                <div class="preview-box" id="preview-container">
-                    <span id="preview-placeholder" style="color: var(--text-muted); font-size: 0.85rem;">Cargando imagen...</span>
-                    <img id="preview-img" src="" alt="Vista previa" style="display: none;">
-                </div>
-            </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Enlace / URL de Vinted</label>
+          <input type="text" id="itemUrlInput" placeholder="Pegar enlace..." class="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs">
+        </div>
 
-            <button type="submit" class="btn-primary">Guardar en mi Armario</button>
-        </form>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Nombre personalizado</label>
+          <input type="text" id="itemNameInput" placeholder="Ej. Vaqueros Levi's 501" class="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Elegir Carpeta</label>
+          <select id="itemFolderSelect" class="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-sm">
+          </select>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 mt-5">
+        <button id="btnCloseItemModal" class="px-3 py-2 text-sm font-medium text-slate-600">Cancelar</button>
+        <button id="btnSaveItem" class="btn-primary text-sm">Guardar en Carpeta</button>
+      </div>
     </div>
-</div>
+  </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // Parsear parámetros de la URL enviados por el Atajo de iOS
-        const params = new URLSearchParams(window.location.search);
-        const enlaceImportado = params.get('importar');
+  <script>
+    let db;
+    let state = {
+      folders: [],
+      items: [],
+      selectedFolderId: 'unclassified',
+      currentImageBase64: ''
+    };
 
-        if (enlaceImportado) {
-            procesarEnlaceImportado(enlaceImportado);
+    const foldersList = document.getElementById('foldersList');
+    const itemsGrid = document.getElementById('itemsGrid');
+    const emptyState = document.getElementById('emptyState');
 
-            // Limpiar el parámetro ?importar= de la barra del navegador sin recargar la página
-            const urlLimpia = window.location.pathname;
-            window.history.replaceState({}, document.title, urlLimpia);
-        }
+    // Inicializar IndexedDB para almacenamiento masivo en iOS
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open('VintedOrganiserDB', 1);
+        request.onupgradeneeded = (e) => {
+          const database = e.target.result;
+          if (!database.objectStoreNames.contains('folders')) {
+            database.createObjectStore('folders', { keyPath: 'id' });
+          }
+          if (!database.objectStoreNames.contains('items')) {
+            database.createObjectStore('items', { keyPath: 'id' });
+          }
+        };
+        request.onsuccess = (e) => {
+          db = e.target.result;
+          resolve();
+        };
+        request.onerror = (e) => reject(e);
+      });
+    }
+
+    async function loadStorage() {
+      if (!db) await initDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction(['folders', 'items'], 'readonly');
+        const storeFolders = tx.objectStore('folders');
+        const storeItems = tx.objectStore('items');
+
+        const reqFolders = storeFolders.getAll();
+        const reqItems = storeItems.getAll();
+
+        tx.oncomplete = () => {
+          state.folders = reqFolders.result || [];
+          state.items = reqItems.result || [];
+          resolve();
+        };
+      });
+    }
+
+    function saveItemToDB(item) {
+      return new Promise((resolve) => {
+        const tx = db.transaction(['items'], 'readwrite');
+        tx.objectStore('items').put(item);
+        tx.oncomplete = () => resolve();
+      });
+    }
+
+    function saveFolderToDB(folder) {
+      return new Promise((resolve) => {
+        const tx = db.transaction(['folders'], 'readwrite');
+        tx.objectStore('folders').put(folder);
+        tx.oncomplete = () => resolve();
+      });
+    }
+
+    function deleteItemFromDB(id) {
+      return new Promise((resolve) => {
+        const tx = db.transaction(['items'], 'readwrite');
+        tx.objectStore('items').delete(id);
+        tx.oncomplete = () => resolve();
+      });
+    }
+
+    // Compresión automática de imágenes para ahorrar espacio y cargar al instante
+    function compressImage(base64Str) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.src = base64Str;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 400;
+          const scaleSize = MAX_WIDTH / img.width;
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scaleSize;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', 0.7));
+        };
+        img.onerror = () => resolve(base64Str);
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await initDB();
+      await loadStorage();
+      setupEvents();
+      render();
+      setTimeout(checkIncomingUrl, 200);
     });
 
-    function procesarEnlaceImportado(url) {
-        const inputUrl = document.getElementById('vinted-url');
-        const inputNombre = document.getElementById('prenda-nombre');
-        const banner = document.getElementById('status-banner');
-        
-        // 1. Asignar la URL capturada al input
-        inputUrl.value = url;
-        banner.classList.add('active');
+    window.addEventListener('pageshow', async () => {
+      if (db) {
+        await loadStorage();
+        render();
+      }
+    });
 
-        // 2. Extraer un nombre provisional a partir de la URL de Vinted
-        try {
-            const pathParts = new URL(url).pathname.split('/');
-            const itemSlug = pathParts[pathParts.indexOf('items') + 1] || '';
-            if (itemSlug) {
-                // Formatear el slug borrando IDs numéricos y guiones
-                const nombreLimpio = itemSlug
-                    .replace(/^\d+-/, '')
-                    .replace(/-/g, ' ');
-                
-                // Capitalizar primera letra de cada palabra
-                inputNombre.value = nombreLimpio.replace(/\b\w/g, l => l.toUpperCase());
-            }
-        } catch (e) {
-            console.log("No se pudo autogenerar el nombre desde la URL", e);
+    function checkIncomingUrl() {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        let rawUrl = urlParams.get('importar') || urlParams.get('url');
+
+        if (rawUrl) {
+          let cleanUrl = rawUrl.trim();
+          const match = cleanUrl.match(/https?:\/\/[^\s]+/);
+          if (match) cleanUrl = match[0];
+          
+          openItemModalWithUrl(cleanUrl);
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
-
-        // 3. Obtener la imagen directamente desde la vista previa del enlace
-        obtenerImagenVinted(url);
+      } catch (err) {
+        console.error("Error al procesar la URL recibida", err);
+      }
     }
 
-    function obtenerImagenVinted(url) {
-        const previewImg = document.getElementById('preview-img');
-        const placeholder = document.getElementById('preview-placeholder');
+    function updateModalImagePreview(imageUrl) {
+      const previewContainer = document.getElementById('modalImagePreviewContainer');
+      const previewImg = document.getElementById('modalImagePreview');
 
-        // Usamos la API de microlink como proxy seguro para sacar la foto de Vinted
-        const apiUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
-
-        fetch(apiUrl)
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success' && data.data.image) {
-                    previewImg.src = data.data.image.url;
-                    previewImg.style.display = 'block';
-                    placeholder.style.display = 'none';
-                } else {
-                    placeholder.textContent = 'No se pudo cargar la imagen automáticamente';
-                }
-            })
-            .catch(err => {
-                console.error("Error al obtener metadatos de Vinted:", err);
-                placeholder.textContent = 'Añade la prenda a mano o guarda sin foto';
-            });
+      if (imageUrl && imageUrl.length > 0) {
+        previewImg.src = imageUrl;
+        previewContainer.classList.remove('hidden');
+      } else {
+        previewContainer.classList.add('hidden');
+        previewImg.src = '';
+      }
     }
 
-    function guardarPrenda(event) {
-        event.preventDefault();
-
-        const nuevaPrenda = {
-            url: document.getElementById('vinted-url').value,
-            nombre: document.getElementById('prenda-nombre').value,
-            carpeta: document.getElementById('prenda-carpeta').value,
-            imagen: document.getElementById('preview-img').src || null,
-            fecha: new Date().toISOString()
-        };
-
-        console.log("Prenda lista para guardar en Supabase:", nuevaPrenda);
-        alert(`¡Prenda "${nuevaPrenda.nombre}" lista para guardar en la carpeta ${nuevaPrenda.carpeta}!`);
-        
-        // Aquí conectaremos la llamada final a Supabase en el siguiente paso
+    function fetchVintedImage(url) {
+      const apiUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
+      fetch(apiUrl)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success' && data.data.image) {
+            state.currentImageBase64 = data.data.image.url;
+            updateModalImagePreview(data.data.image.url);
+          }
+        })
+        .catch(err => console.log("No se pudo extraer la imagen por API proxy", err));
     }
-</script>
 
+    function openItemModalWithUrl(url) {
+      const itemModal = document.getElementById('itemModal');
+      document.getElementById('itemUrlInput').value = url || '';
+      state.currentImageBase64 = '';
+      updateModalImagePreview('');
+
+      let suggestedName = "Prenda Vinted";
+      try {
+        const urlObj = new URL(url);
+        const pathSegments = urlObj.pathname.split('/');
+        const lastSegment = pathSegments.filter(Boolean).pop();
+        if (lastSegment) {
+          let nameClean = lastSegment.replace(/^\d+-/, '').replace(/-/g, ' ');
+          suggestedName = nameClean.charAt(0).toUpperCase() + nameClean.slice(1);
+        }
+      } catch (e) {
+        console.log("No se pudo extraer el nombre automáticamente");
+      }
+
+      document.getElementById('itemNameInput').value = suggestedName;
+      populateSelect();
+      itemModal.classList.remove('hidden');
+
+      if (url) {
+        fetchVintedImage(url);
+      }
+    }
+
+    function render() {
+      foldersList.innerHTML = '';
+      
+      const unclassifiedCount = state.items.filter(i => i.folderId === 'unclassified').length;
+      const isUnActive = state.selectedFolderId === 'unclassified';
+      
+      const unDiv = document.createElement('div');
+      unDiv.className = `px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between gap-2 cursor-pointer shrink-0 ${isUnActive ? 'bg-teal-600 text-white' : 'bg-white/80 text-slate-700'}`;
+      unDiv.onclick = () => { state.selectedFolderId = 'unclassified'; render(); };
+      unDiv.innerHTML = `<span>Desperdigadas</span><span class="opacity-80">(${unclassifiedCount})</span>`;
+      foldersList.appendChild(unDiv);
+
+      state.folders.forEach(f => {
+        const count = state.items.filter(i => i.folderId === f.id).length;
+        const isActive = state.selectedFolderId === f.id;
+        const fDiv = document.createElement('div');
+        fDiv.className = `px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between gap-2 cursor-pointer shrink-0 ${isActive ? 'bg-teal-600 text-white' : 'bg-white/80 text-slate-700'}`;
+        fDiv.onclick = () => { state.selectedFolderId = f.id; render(); };
+        fDiv.innerHTML = `<span>${f.name}</span><span class="opacity-80">(${count})</span>`;
+        foldersList.appendChild(fDiv);
+      });
+
+      itemsGrid.innerHTML = '';
+      const currentFolder = state.folders.find(f => f.id === state.selectedFolderId);
+      document.getElementById('currentFolderTitle').textContent = currentFolder ? currentFolder.name : 'Desperdigadas';
+
+      const filtered = state.items.filter(i => i.folderId === state.selectedFolderId);
+      document.getElementById('currentFolderBadge').textContent = filtered.length;
+
+      if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+        filtered.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'glass-card p-2.5 flex flex-col justify-between';
+          
+          const defaultPlaceholder = 'https://placehold.co/300x300/e2e8f0/64748b?text=Vinted';
+          const imgSrc = (item.image && item.image.trim() !== '') ? item.image : defaultPlaceholder;
+
+          card.innerHTML = `
+            <div>
+              <div class="h-28 w-full bg-slate-200 rounded-lg overflow-hidden mb-2 relative flex items-center justify-center">
+                <img src="${imgSrc}" class="w-full h-full object-cover" onerror="this.src='${defaultPlaceholder}'">
+              </div>
+              <p class="font-bold text-xs text-slate-800 truncate">${item.name}</p>
+            </div>
+            <div class="flex items-center justify-between mt-2 pt-1 border-t border-slate-200/50">
+              <a href="${item.url || '#'}" target="_blank" class="text-[10px] text-teal-600 font-semibold">Ver Vinted</a>
+              <button onclick="deleteItem('${item.id}')" class="text-[10px] text-rose-500"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          `;
+          itemsGrid.appendChild(card);
+        });
+      }
+
+      document.getElementById('totalItemsCount').textContent = `${state.items.length} Prendas`;
+    }
+
+    function setupEvents() {
+      const folderModal = document.getElementById('folderModal');
+      const itemModal = document.getElementById('itemModal');
+
+      document.getElementById('btnPasteClipboard').onclick = async () => {
+        try {
+          if (!navigator.clipboard || !navigator.clipboard.read) {
+            alert("No hay acceso directo al portapapeles. Abre la app desde Safari.");
+            return;
+          }
+
+          const clipboardItems = await navigator.clipboard.read();
+          let imageFound = false;
+
+          for (const item of clipboardItems) {
+            const imageType = item.types.find(type => type.startsWith('image/'));
+            if (imageType) {
+              const blob = await item.getType(imageType);
+              const reader = new FileReader();
+              reader.onload = async (e) => {
+                const compressed = await compressImage(e.target.result);
+                state.currentImageBase64 = compressed;
+                updateModalImagePreview(compressed);
+              };
+              reader.readAsDataURL(blob);
+              imageFound = true;
+              break;
+            }
+          }
+
+          if (!imageFound) {
+            alert("No hay fotos guardadas en el portapapeles. Ejecuta el atajo desde Vinted nuevamente.");
+          }
+        } catch (err) {
+          alert("Safari necesita tu permiso para acceder al portapapeles. Acepta el mensaje en pantalla.");
+        }
+      };
+
+      const openFolderModal = () => {
+        document.getElementById('folderNameInput').value = '';
+        folderModal.classList.remove('hidden');
+      };
+
+      document.getElementById('btnOpenNewFolderModal').onclick = openFolderModal;
+      document.getElementById('btnMobileAddFolder').onclick = openFolderModal;
+      document.getElementById('btnCloseFolderModal').onclick = () => folderModal.classList.add('hidden');
+      
+      document.getElementById('btnSaveFolder').onclick = async () => {
+        const val = document.getElementById('folderNameInput').value.trim();
+        if (val) {
+          const newFolder = { id: 'f_' + Date.now(), name: val };
+          state.folders.push(newFolder);
+          await saveFolderToDB(newFolder);
+          folderModal.classList.add('hidden');
+          render();
+        }
+      };
+
+      document.getElementById('btnOpenNewItemModal').onclick = () => {
+        document.getElementById('itemNameInput').value = '';
+        document.getElementById('itemUrlInput').value = '';
+        state.currentImageBase64 = '';
+        document.getElementById('modalImagePreviewContainer').classList.add('hidden');
+        populateSelect();
+        itemModal.classList.remove('hidden');
+      };
+
+      document.getElementById('btnCloseItemModal').onclick = () => itemModal.classList.add('hidden');
+
+      document.getElementById('btnSaveItem').onclick = async () => {
+        const name = document.getElementById('itemNameInput').value.trim();
+        const url = document.getElementById('itemUrlInput').value.trim();
+
+        if (name) {
+          const newItem = {
+            id: 'i_' + Date.now(),
+            name: name,
+            folderId: document.getElementById('itemFolderSelect').value,
+            url: url,
+            image: state.currentImageBase64 || 'https://placehold.co/300x300/e2e8f0/64748b?text=Vinted'
+          };
+
+          state.items.push(newItem);
+          await saveItemToDB(newItem);
+          itemModal.classList.add('hidden');
+          render();
+        }
+      };
+    }
+
+    function populateSelect() {
+      const sel = document.getElementById('itemFolderSelect');
+      sel.innerHTML = '<option value="unclassified">Desperdigadas</option>';
+      state.folders.forEach(f => {
+        const optEl = document.createElement('option');
+        optEl.value = f.id;
+        optEl.textContent = f.name;
+        sel.appendChild(optEl);
+      });
+      sel.value = state.selectedFolderId;
+    }
+
+    async function deleteItem(id) {
+      state.items = state.items.filter(i => i.id !== id);
+      await deleteItemFromDB(id);
+      render();
+    }
+  </script>
 </body>
 </html>
-
