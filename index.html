@@ -93,7 +93,7 @@
                 </a>
             </div>
 
-            <!-- Formulario para editar -->
+            <!-- Formulario de Edición -->
             <form id="edit-item-form" onsubmit="handleSaveItemEdit(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-1">Nombre</label>
@@ -195,33 +195,37 @@
         </div>
     </div>
 
-    <!-- LOGICA JAVASCRIPT CORREGIDA -->
+    <!-- JAVASCRIPT AUTOSUFICIENTE -->
     <script>
         let db;
         let activeFolderId = null;
         let activeEditingItem = null;
         let allCurrentItems = [];
 
-        // Conectar con IndexedDB
-        const request = indexedDB.open('VintedWardrobeDB', 1);
+        function initDB() {
+            // Nombre y versión limpia para evitar choques
+            const request = indexedDB.open('VintedWardrobeDB_v10', 1);
 
-        request.onerror = (e) => console.error("Error IndexedDB:", e);
+            request.onerror = (e) => {
+                console.error("Error cargando DB:", e);
+            };
 
-        request.onupgradeneeded = (e) => {
-            db = e.target.result;
-            if (!db.objectStoreNames.contains('folders')) {
-                db.createObjectStore('folders', { keyPath: 'id', autoIncrement: true });
-            }
-            if (!db.objectStoreNames.contains('items')) {
-                const itemStore = db.createObjectStore('items', { keyPath: 'id', autoIncrement: true });
-                itemStore.createIndex('folderId', 'folderId', { unique: false });
-            }
-        };
+            request.onupgradeneeded = (e) => {
+                db = e.target.result;
+                if (!db.objectStoreNames.contains('folders')) {
+                    db.createObjectStore('folders', { keyPath: 'id', autoIncrement: true });
+                }
+                if (!db.objectStoreNames.contains('items')) {
+                    const itemStore = db.createObjectStore('items', { keyPath: 'id', autoIncrement: true });
+                    itemStore.createIndex('folderId', 'folderId', { unique: false });
+                }
+            };
 
-        request.onsuccess = (e) => {
-            db = e.target.result;
-            seedDefaults();
-        };
+            request.onsuccess = (e) => {
+                db = e.target.result;
+                seedDefaults();
+            };
+        }
 
         function seedDefaults() {
             const tx = db.transaction('folders', 'readwrite');
@@ -245,29 +249,29 @@
             checkUrlParams();
         }
 
-        // DETECTAR COMPARTIR DESDE EL ATAJO DE IOS
+        // CAPTURA DE ENLACE DE VINTED COMPARTIDO
         function checkUrlParams() {
             const params = new URLSearchParams(window.location.search);
             const shareUrl = params.get('url') || params.get('text');
             const shareTitle = params.get('title');
 
             if (shareUrl) {
-                // Limpiar posible texto extra que manda iOS
-                const extractedUrl = extractFirstUrl(shareUrl);
-                if (extractedUrl) {
-                    openAddModal(extractedUrl, shareTitle || '');
+                const cleanUrl = extractFirstUrl(shareUrl);
+                if (cleanUrl) {
+                    openAddModal(cleanUrl, shareTitle || 'Nueva prenda de Vinted');
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
             }
         }
 
         function extractFirstUrl(text) {
-            const urlMatch = text.match(/(https?:\/\/[^\s]+)/g);
-            return urlMatch ? urlMatch[0] : text;
+            const match = text.match(/(https?:\/\/[^\s]+)/g);
+            return match ? match[0] : text;
         }
 
-        // DIBUJAR PESTAÑAS DE CARPETAS
+        // GESTIÓN DE CARPETAS Y PESTAÑAS
         function loadTabs() {
+            if (!db) return;
             const tx = db.transaction(['folders', 'items'], 'readonly');
             const folderStore = tx.objectStore('folders');
             const itemStore = tx.objectStore('items');
@@ -314,9 +318,8 @@
             loadTabs();
         }
 
-        // MOSTRAR PRENDAS DE LA CARPETA ACTIVA
         function loadItemsForActiveFolder() {
-            if (!activeFolderId) return;
+            if (!activeFolderId || !db) return;
             const tx = db.transaction('items', 'readonly');
             const store = tx.index('folderId');
 
@@ -331,7 +334,7 @@
             const emptyState = document.getElementById('empty-state');
             grid.innerHTML = '';
 
-            if (items.length === 0) {
+            if (!items || items.length === 0) {
                 emptyState.classList.remove('hidden');
                 return;
             }
@@ -430,8 +433,9 @@
 
         function handleCreateFolder(e) {
             e.preventDefault();
-            const name = document.getElementById('new-folder-name').value.trim();
-            if (!name) return;
+            const nameInput = document.getElementById('new-folder-name');
+            const name = nameInput.value.trim();
+            if (!name || !db) return;
 
             const tx = db.transaction('folders', 'readwrite');
             const store = tx.objectStore('folders');
@@ -439,13 +443,9 @@
             const addReq = store.add({ name: name, createdAt: Date.now() });
 
             addReq.onsuccess = (ev) => {
-                activeFolderId = ev.target.result; // Seleccionar la nueva carpeta creada
+                activeFolderId = ev.target.result;
                 closeNewFolderModal();
                 loadTabs();
-            };
-
-            addReq.onerror = (err) => {
-                console.error("Error creando carpeta:", err);
             };
         }
 
@@ -473,6 +473,7 @@
 
         async function populateFolderOptions() {
             return new Promise((resolve) => {
+                if (!db) return resolve();
                 const tx = db.transaction('folders', 'readonly');
                 tx.objectStore('folders').getAll().onsuccess = (e) => {
                     const folders = e.target.result;
@@ -513,7 +514,7 @@
                     const ogTitle = doc.querySelector('meta[property="og:title"]');
 
                     if (ogImage && ogImage.content) imageUrl = ogImage.content;
-                    if (ogTitle && !document.getElementById('item-title').value) {
+                    if (ogTitle && (!document.getElementById('item-title').value || document.getElementById('item-title').value === 'Nueva prenda de Vinted')) {
                         document.getElementById('item-title').value = ogTitle.content;
                     }
                     if (imageUrl) break;
@@ -544,6 +545,8 @@
                 loadTabs();
             };
         }
+
+        window.onload = initDB;
     </script>
 </body>
 </html>
