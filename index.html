@@ -29,16 +29,16 @@
     </header>
 
     <!-- PESTAÑAS DE CARPETAS -->
-    <div class="bg-white border-b border-slate-100 px-5 py-3 overflow-x-auto no-scrollbar flex items-center space-x-2">
+    <div class="bg-white border-b border-slate-100 px-5 py-3 overflow-x-auto flex items-center space-x-2">
         <div id="folder-tabs" class="flex space-x-2">
             <!-- Pestañas dinámicas -->
         </div>
     </div>
 
-    <!-- CONTENIDO DE LA CARPETA SELECCIONADA -->
+    <!-- CONTENIDO PRINCIPAL -->
     <main class="flex-1 max-w-4xl w-full mx-auto p-5 space-y-5">
         
-        <!-- RESUMEN Y BUSCADOR -->
+        <!-- BARRA SUPERIOR: TITULO, CONTAJE Y BUSCADOR -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
                 <div class="flex items-center gap-2">
@@ -77,7 +77,7 @@
 
     <!-- MODAL: DETALLE EN GRANDE Y EDICIÓN -->
     <div id="item-detail-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5 animate-in fade-in duration-200">
+        <div class="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-bold text-slate-900">Detalle de la prenda</h3>
                 <button onclick="closeItemDetailModal()" class="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100 transition">
@@ -86,9 +86,9 @@
             </div>
 
             <!-- Imagen grande de la prenda -->
-            <div class="w-full h-72 bg-slate-100 rounded-2xl overflow-hidden relative group">
+            <div class="w-full h-72 bg-slate-100 rounded-2xl overflow-hidden relative border border-slate-200/60">
                 <img id="detail-image" src="" alt="Prenda" class="w-full h-full object-cover">
-                <a id="detail-vinted-link" href="#" target="_blank" class="absolute bottom-3 right-3 bg-white/90 hover:bg-white text-slate-900 px-3.5 py-2 rounded-xl text-xs font-bold backdrop-blur-md transition flex items-center gap-2 shadow-sm border border-slate-200">
+                <a id="detail-vinted-link" href="#" target="_blank" class="absolute bottom-3 right-3 bg-white/95 hover:bg-white text-slate-900 px-3.5 py-2 rounded-xl text-xs font-bold backdrop-blur-md transition flex items-center gap-2 shadow-sm border border-slate-200">
                     <i class="fa-solid fa-arrow-up-right-from-square text-teal-600"></i> Abrir en Vinted
                 </a>
             </div>
@@ -139,7 +139,7 @@
 
             <div id="scraping-status" class="hidden bg-slate-50 border border-slate-200 p-3 rounded-2xl text-xs text-slate-600 flex items-center gap-3">
                 <div class="w-4 h-4 border-2 border-teal-600/30 border-t-teal-600 rounded-full animate-spin shrink-0"></div>
-                <span id="scraping-text">Extrayendo información...</span>
+                <span id="scraping-text">Obteniendo foto e información...</span>
             </div>
 
             <form onsubmit="handleAddItem(event)" class="space-y-4">
@@ -151,7 +151,7 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-1">Nombre / Título</label>
-                    <input type="text" id="item-title" required placeholder="Ej. Chaqueta Nike" 
+                    <input type="text" id="item-title" required placeholder="Ej. Chaqueta Vinted" 
                         class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-teal-500 transition">
                 </div>
 
@@ -195,15 +195,15 @@
         </div>
     </div>
 
-    <!-- LOGICA JAVASCRIPT & INDEXEDDB -->
+    <!-- LOGICA JAVASCRIPT CORREGIDA -->
     <script>
         let db;
         let activeFolderId = null;
         let activeEditingItem = null;
         let allCurrentItems = [];
 
-        // Inicializar IndexedDB
-        const request = indexedDB.open('VintedWardrobeDB', 2);
+        // Conectar con IndexedDB
+        const request = indexedDB.open('VintedWardrobeDB', 1);
 
         request.onerror = (e) => console.error("Error IndexedDB:", e);
 
@@ -245,18 +245,28 @@
             checkUrlParams();
         }
 
+        // DETECTAR COMPARTIR DESDE EL ATAJO DE IOS
         function checkUrlParams() {
             const params = new URLSearchParams(window.location.search);
-            const shareUrl = params.get('url');
+            const shareUrl = params.get('url') || params.get('text');
             const shareTitle = params.get('title');
 
             if (shareUrl) {
-                openAddModal(shareUrl, shareTitle || '');
-                window.history.replaceState({}, document.title, window.location.pathname);
+                // Limpiar posible texto extra que manda iOS
+                const extractedUrl = extractFirstUrl(shareUrl);
+                if (extractedUrl) {
+                    openAddModal(extractedUrl, shareTitle || '');
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
             }
         }
 
-        // CARGAR PESTAÑAS DE CARPETAS
+        function extractFirstUrl(text) {
+            const urlMatch = text.match(/(https?:\/\/[^\s]+)/g);
+            return urlMatch ? urlMatch[0] : text;
+        }
+
+        // DIBUJAR PESTAÑAS DE CARPETAS
         function loadTabs() {
             const tx = db.transaction(['folders', 'items'], 'readonly');
             const folderStore = tx.objectStore('folders');
@@ -280,7 +290,7 @@
                         const isActive = folder.id === activeFolderId;
 
                         const btn = document.createElement('button');
-                        btn.onclick = () => selectFolder(folder.id, folder.name);
+                        btn.onclick = () => selectFolder(folder.id);
                         btn.className = isActive 
                             ? "bg-teal-700 text-white font-semibold px-4 py-2 rounded-2xl text-xs flex items-center gap-2 shadow-sm shrink-0 transition"
                             : "bg-white hover:bg-slate-100 text-slate-700 font-medium px-4 py-2 rounded-2xl text-xs flex items-center gap-2 shrink-0 border border-slate-100 transition";
@@ -299,12 +309,12 @@
             };
         }
 
-        function selectFolder(folderId, folderName) {
+        function selectFolder(folderId) {
             activeFolderId = folderId;
             loadTabs();
         }
 
-        // CARGAR PRENDAS
+        // MOSTRAR PRENDAS DE LA CARPETA ACTIVA
         function loadItemsForActiveFolder() {
             if (!activeFolderId) return;
             const tx = db.transaction('items', 'readonly');
@@ -351,7 +361,7 @@
             renderItems(filtered);
         }
 
-        // MODAL DETALLE Y EDICIÓN
+        // DETALLE Y EDICIÓN
         async function openItemDetailModal(item) {
             activeEditingItem = item;
             document.getElementById('detail-image').src = item.image;
@@ -399,7 +409,7 @@
             if (!confirm("¿Borrar esta prenda?")) return;
 
             const tx = db.transaction('items', 'readwrite');
-            store = tx.objectStore('items');
+            const store = tx.objectStore('items');
 
             store.delete(activeEditingItem.id).onsuccess = () => {
                 closeItemDetailModal();
@@ -411,19 +421,31 @@
         function openNewFolderModal() {
             document.getElementById('new-folder-modal').classList.remove('hidden');
             document.getElementById('new-folder-name').value = '';
+            document.getElementById('new-folder-name').focus();
         }
+
         function closeNewFolderModal() {
             document.getElementById('new-folder-modal').classList.add('hidden');
         }
+
         function handleCreateFolder(e) {
             e.preventDefault();
             const name = document.getElementById('new-folder-name').value.trim();
             if (!name) return;
 
             const tx = db.transaction('folders', 'readwrite');
-            tx.objectStore('folders').add({ name, createdAt: Date.now() }).onsuccess = () => {
+            const store = tx.objectStore('folders');
+            
+            const addReq = store.add({ name: name, createdAt: Date.now() });
+
+            addReq.onsuccess = (ev) => {
+                activeFolderId = ev.target.result; // Seleccionar la nueva carpeta creada
                 closeNewFolderModal();
                 loadTabs();
+            };
+
+            addReq.onerror = (err) => {
+                console.error("Error creando carpeta:", err);
             };
         }
 
@@ -439,7 +461,9 @@
                 document.getElementById('item-folder').value = activeFolderId;
             }
 
-            if (prefillUrl) extractData(prefillUrl);
+            if (prefillUrl) {
+                extractData(prefillUrl);
+            }
         }
 
         function closeAddModal() {
@@ -471,7 +495,7 @@
             const statusBox = document.getElementById('scraping-status');
             const statusText = document.getElementById('scraping-text');
             statusBox.classList.remove('hidden');
-            statusText.textContent = "Extrayendo foto de Vinted...";
+            statusText.textContent = "Obteniendo foto de Vinted...";
 
             let imageUrl = '';
             const proxies = [
@@ -498,10 +522,10 @@
 
             if (imageUrl) {
                 document.getElementById('item-image-url').value = imageUrl;
-                statusText.textContent = "¡Imagen capturada!";
+                statusText.textContent = "¡Foto obtenida con éxito!";
             } else {
                 document.getElementById('item-image-url').value = "https://placehold.co/600x800/f1f5f9/94a3b8?text=Vinted";
-                statusText.textContent = "Guardando con plantilla por defecto.";
+                statusText.textContent = "Guardando con foto por defecto.";
             }
 
             setTimeout(() => statusBox.classList.add('hidden'), 2000);
