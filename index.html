@@ -176,19 +176,20 @@
     <div class="glass-card w-full max-w-sm p-5 relative">
       <h3 class="text-base font-bold text-slate-800 mb-3">Guardar Prenda</h3>
 
-      <div id="modalImagePreviewContainer" class="hidden mb-2 h-36 w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center relative">
-        <img id="modalImagePreview" src="" class="w-full h-full object-cover">
+      <div id="modalImagePreviewContainer" class="hidden mb-3 h-44 w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center relative">
+        <span id="previewLoadingText" class="text-xs text-slate-400 font-medium">Cargando foto de Vinted...</span>
+        <img id="modalImagePreview" src="" class="w-full h-full object-cover hidden">
       </div>
 
       <button type="button" id="btnPasteClipboard" class="w-full mb-3 py-2.5 px-3 bg-teal-50 hover:bg-teal-100 text-teal-800 font-semibold text-xs rounded-xl border border-teal-200 flex items-center justify-center gap-2 transition-colors">
         <i class="fa-solid fa-paste text-teal-600"></i>
-        <span>Pegar Foto del Portapapeles</span>
+        <span>Pegar Foto del Portapapeles (Opcional)</span>
       </button>
 
       <div class="space-y-3">
         <div>
           <label class="block text-xs font-semibold text-slate-500 mb-1">Enlace / URL de Vinted</label>
-          <input type="text" id="itemUrlInput" placeholder="Pegar enlace..." class="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs">
+          <input type="text" id="itemUrlInput" placeholder="Pegar enlace..." class="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs" readonly>
         </div>
 
         <div>
@@ -223,7 +224,7 @@
     const itemsGrid = document.getElementById('itemsGrid');
     const emptyState = document.getElementById('emptyState');
 
-    // Inicializar IndexedDB para almacenamiento masivo en iOS
+    // Inicializar IndexedDB
     function initDB() {
       return new Promise((resolve, reject) => {
         const request = indexedDB.open('VintedOrganiserDB', 1);
@@ -286,7 +287,6 @@
       });
     }
 
-    // Compresión automática de imágenes para ahorrar espacio y cargar al instante
     function compressImage(base64Str) {
       return new Promise((resolve) => {
         const img = new Image();
@@ -321,6 +321,7 @@
       }
     });
 
+    // DETECCIÓN DEL ATAJO Y EXTRACCIÓN AUTOMÁTICA DE LA FOTO REAL
     function checkIncomingUrl() {
       try {
         const urlParams = new URLSearchParams(window.location.search);
@@ -339,38 +340,21 @@
       }
     }
 
-    function updateModalImagePreview(imageUrl) {
-      const previewContainer = document.getElementById('modalImagePreviewContainer');
-      const previewImg = document.getElementById('modalImagePreview');
-
-      if (imageUrl && imageUrl.length > 0) {
-        previewImg.src = imageUrl;
-        previewContainer.classList.remove('hidden');
-      } else {
-        previewContainer.classList.add('hidden');
-        previewImg.src = '';
-      }
-    }
-
-    function fetchVintedImage(url) {
-      const apiUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
-      fetch(apiUrl)
-        .then(res => res.json())
-        .then(data => {
-          if (data.status === 'success' && data.data.image) {
-            state.currentImageBase64 = data.data.image.url;
-            updateModalImagePreview(data.data.image.url);
-          }
-        })
-        .catch(err => console.log("No se pudo extraer la imagen por API proxy", err));
-    }
-
     function openItemModalWithUrl(url) {
       const itemModal = document.getElementById('itemModal');
       document.getElementById('itemUrlInput').value = url || '';
       state.currentImageBase64 = '';
-      updateModalImagePreview('');
+      
+      const previewContainer = document.getElementById('modalImagePreviewContainer');
+      const previewImg = document.getElementById('modalImagePreview');
+      const loadingText = document.getElementById('previewLoadingText');
 
+      previewContainer.classList.remove('hidden');
+      previewImg.classList.add('hidden');
+      loadingText.classList.remove('hidden');
+      loadingText.textContent = 'Cargando foto de Vinted...';
+
+      // 1. Autogenerar título limpio desde el slug
       let suggestedName = "Prenda Vinted";
       try {
         const urlObj = new URL(url);
@@ -383,13 +367,31 @@
       } catch (e) {
         console.log("No se pudo extraer el nombre automáticamente");
       }
-
       document.getElementById('itemNameInput').value = suggestedName;
+
       populateSelect();
       itemModal.classList.remove('hidden');
 
+      // 2. Extraer foto oficial usando la tecnología Proxy de Microlink
       if (url) {
-        fetchVintedImage(url);
+        const apiUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
+        fetch(apiUrl)
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'success' && data.data.image) {
+              const imgUrl = data.data.image.url;
+              state.currentImageBase64 = imgUrl;
+              previewImg.src = imgUrl;
+              previewImg.classList.remove('hidden');
+              loadingText.classList.add('hidden');
+            } else {
+              loadingText.textContent = 'No se pudo cargar la foto automáticamente';
+            }
+          })
+          .catch(err => {
+            console.error("Error extrayendo foto de Vinted:", err);
+            loadingText.textContent = 'Añade foto del portapapeles si lo deseas';
+          });
       }
     }
 
@@ -474,7 +476,12 @@
               reader.onload = async (e) => {
                 const compressed = await compressImage(e.target.result);
                 state.currentImageBase64 = compressed;
-                updateModalImagePreview(compressed);
+                
+                const previewImg = document.getElementById('modalImagePreview');
+                const loadingText = document.getElementById('previewLoadingText');
+                previewImg.src = compressed;
+                previewImg.classList.remove('hidden');
+                loadingText.classList.add('hidden');
               };
               reader.readAsDataURL(blob);
               imageFound = true;
@@ -483,10 +490,10 @@
           }
 
           if (!imageFound) {
-            alert("No hay fotos guardadas en el portapapeles. Ejecuta el atajo desde Vinted nuevamente.");
+            alert("No hay fotos guardadas en el portapapeles.");
           }
         } catch (err) {
-          alert("Safari necesita tu permiso para acceder al portapapeles. Acepta el mensaje en pantalla.");
+          alert("Safari necesita tu permiso para acceder al portapapeles.");
         }
       };
 
@@ -562,4 +569,3 @@
   </script>
 </body>
 </html>
-
