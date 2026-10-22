@@ -189,14 +189,14 @@
         </div>
     </div>
 
-    <!-- SCRIPT CORREGIDO ULTRA-COMPATIBLE -->
+    <!-- SCRIPT CORREGIDO Y DIRECTO -->
     <script>
         let db;
         let currentFolderId = null;
         let activeEditingItem = null;
 
         function initAppDatabase() {
-            const request = indexedDB.open('VintedArmarioAppDB', 1);
+            const request = indexedDB.open('VintedArmarioAppDB_v20', 1);
 
             request.onerror = (e) => console.error("Error DB:", e);
 
@@ -237,7 +237,6 @@
         function checkUrlParamsAndLoad() {
             loadFoldersView();
 
-            // DETECCIÓN MULTI-PARÁMETRO PARA EL ATAJO DE IOS
             const params = new URLSearchParams(window.location.search);
             const rawShare = params.get('importar') || params.get('url') || params.get('text');
             const shareTitle = params.get('title');
@@ -579,8 +578,8 @@
             };
         }
 
-        // Cargar base de datos inmediatamente
-        window.addEventListener('DOMContentLoaded', initAppDatabase);
+        // EJECUTAR DIRECTAMENTE AL LEER EL SCRIPT (SIN ESPERAR DOMContentLoaded)
+        initAppDatabase();
     </script>
 </body>
 </html>
