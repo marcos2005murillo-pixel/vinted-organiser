@@ -189,14 +189,14 @@
         </div>
     </div>
 
-    <!-- SCRIPT CORREGIDO Y DIRECTO -->
+    <!-- SCRIPT CORREGIDO SIN ERRORES DE ÍNDICES -->
     <script>
         let db;
         let currentFolderId = null;
         let activeEditingItem = null;
 
         function initAppDatabase() {
-            const request = indexedDB.open('VintedArmarioAppDB_v20', 1);
+            const request = indexedDB.open('VintedArmarioAppDB_v22', 1);
 
             request.onerror = (e) => console.error("Error DB:", e);
 
@@ -213,17 +213,18 @@
 
             request.onsuccess = (event) => {
                 db = event.target.result;
-                seedDefaultFolderIfNeeded();
+                ensureDefaultFolders();
             };
         }
 
-        function seedDefaultFolderIfNeeded() {
+        function ensureDefaultFolders() {
             const tx = db.transaction('folders', 'readwrite');
             const store = tx.objectStore('folders');
-            const countReq = store.count();
+            const req = store.getAll();
 
-            countReq.onsuccess = () => {
-                if (countReq.result === 0) {
+            req.onsuccess = () => {
+                const folders = req.result;
+                if (!folders || folders.length === 0) {
                     store.add({ name: 'Desperdigadas', createdAt: Date.now() });
                     store.add({ name: 'Carol', createdAt: Date.now() });
                     store.add({ name: 'Marcos', createdAt: Date.now() });
@@ -277,11 +278,12 @@
             if (!db) return;
             const tx = db.transaction(['folders', 'items'], 'readonly');
             const folderStore = tx.objectStore('folders');
-            const itemStore = tx.index('folderId');
-            const foldersReq = folderStore.getAll();
+            const itemStore = tx.objectStore('items');
+            const index = itemStore.index('folderId');
 
+            const foldersReq = folderStore.getAll();
             foldersReq.onsuccess = () => {
-                const folders = foldersReq.result;
+                const folders = foldersReq.result || [];
                 const grid = document.getElementById('folders-grid');
                 document.getElementById('folders-count').textContent = `${folders.length} ${folders.length === 1 ? 'carpeta' : 'carpetas'}`;
                 grid.innerHTML = '';
@@ -292,9 +294,9 @@
                 }
 
                 folders.forEach(folder => {
-                    const itemReq = itemStore.getAll(folder.id);
+                    const itemReq = index.getAll(folder.id);
                     itemReq.onsuccess = () => {
-                        const items = itemReq.result;
+                        const items = itemReq.result || [];
                         const coverImg = items.length > 0 ? items[items.length - 1].image : null;
                         const initial = folder.name.charAt(0).toUpperCase();
 
@@ -329,11 +331,12 @@
 
         function loadFolderItems(folderId, folderName) {
             const tx = db.transaction('items', 'readonly');
-            const store = tx.index('folderId');
-            const req = store.getAll(folderId);
+            const store = tx.objectStore('items');
+            const index = store.index('folderId');
+            const req = index.getAll(folderId);
 
             req.onsuccess = () => {
-                const items = req.result;
+                const items = req.result || [];
                 const grid = document.getElementById('items-grid');
                 document.getElementById('current-folder-name').textContent = folderName;
                 document.getElementById('current-folder-count').textContent = `${items.length} ${items.length === 1 ? 'prenda guardada' : 'prendas guardadas'}`;
@@ -402,12 +405,12 @@
 
             const tx = db.transaction(['folders', 'items'], 'readwrite');
             const folderStore = tx.objectStore('folders');
-            const itemStore = tx.index('folderId');
+            const itemStore = tx.objectStore('items');
+            const index = itemStore.index('folderId');
 
-            const itemReq = itemStore.getAllKeys(currentFolderId);
+            const itemReq = index.getAllKeys(currentFolderId);
             itemReq.onsuccess = () => {
-                const itemStoreRw = tx.objectStore('items');
-                itemReq.result.forEach(itemId => itemStoreRw.delete(itemId));
+                itemReq.result.forEach(itemId => itemStore.delete(itemId));
                 folderStore.delete(currentFolderId);
 
                 tx.oncomplete = () => {
@@ -447,7 +450,7 @@
                 const req = store.getAll();
 
                 req.onsuccess = () => {
-                    const folders = req.result;
+                    const folders = req.result || [];
                     const selects = [document.getElementById('item-folder'), document.getElementById('edit-item-folder')];
                     
                     selects.forEach(select => {
@@ -578,7 +581,7 @@
             };
         }
 
-        // EJECUTAR DIRECTAMENTE AL LEER EL SCRIPT (SIN ESPERAR DOMContentLoaded)
+        // Arrancar la base de datos de inmediato
         initAppDatabase();
     </script>
 </body>
