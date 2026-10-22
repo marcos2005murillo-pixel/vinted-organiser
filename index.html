@@ -1,534 +1,612 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Vinted Organiser</title>
-
-  <!-- iOS Web App Capability -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Vinted">
-
-  <!-- Tailwind CSS & Icons CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <style>
-    :root {
-      --sat: env(safe-area-inset-top);
-      --sab: env(safe-area-inset-bottom);
-    }
-
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-      background: #f1f5f9;
-      background: linear-gradient(135deg, #e0e7ff 0%, #f1f5f9 40%, #e2e8f0 70%, #f3e8ff 100%);
-      background-attachment: fixed;
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      color: #1e293b;
-      user-select: none;
-    }
-
-    .app-container {
-      width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      background: rgba(255, 255, 255, 0.65);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-    }
-
-    @media (min-width: 768px) {
-      .app-container {
-        height: 92vh;
-        margin: 4vh auto;
-        border-radius: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.8);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.06);
-        flex-direction: row;
-      }
-    }
-
-    .glass-card {
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      border-radius: 16px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-    }
-
-    .btn-primary {
-      background-color: #0d9488;
-      color: white;
-      font-weight: 600;
-      border-radius: 12px;
-      padding: 10px 16px;
-      border: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    ::-webkit-scrollbar { display: none; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Armario Digital - Vinted</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
 </head>
-<body class="p-0 md:p-6">
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col selection:bg-zinc-800 selection:text-white">
 
-  <div class="app-container overflow-hidden relative">
-
-    <!-- Mobile Header -->
-    <header class="p-4 pt-10 md:pt-4 border-b border-slate-200/60 flex items-center justify-between bg-white/40 md:hidden">
-      <h1 class="font-bold text-lg text-slate-800 flex items-center gap-2">
-        <i class="fa-solid fa-shirt text-teal-600"></i>
-        <span>Vinted Organiser</span>
-      </h1>
-      <button id="btnMobileAddFolder" class="p-2 text-teal-600 bg-white/80 rounded-xl border border-white text-sm">
-        <i class="fa-solid fa-folder-plus"></i>
-      </button>
+    <!-- CABECERA -->
+    <header class="sticky top-0 z-40 bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <button id="back-btn" onclick="goHome()" class="hidden text-zinc-400 hover:text-white transition p-2 rounded-xl hover:bg-zinc-800">
+                <i class="fa-solid fa-arrow-left text-lg"></i>
+            </button>
+            <h1 id="app-title" class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                <i class="fa-solid fa-shirt text-zinc-400"></i> Mi Armario
+            </h1>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button onclick="openNewFolderModal()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 border border-zinc-700/50">
+                <i class="fa-solid fa-folder-plus"></i> <span class="hidden sm:inline">Nueva Carpeta</span>
+            </button>
+            <button onclick="openAddModal()" class="bg-white text-zinc-950 hover:bg-zinc-200 px-3.5 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Añadir Prenda</span>
+            </button>
+        </div>
     </header>
 
-    <!-- Sidebar / Folders -->
-    <aside class="w-full md:w-72 bg-slate-50/50 p-4 border-b md:border-b-0 md:border-r border-slate-200/60 flex flex-col justify-between shrink-0">
-      <div>
-        <div class="hidden md:flex items-center justify-between mb-6 pt-2">
-          <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <i class="fa-solid fa-shirt text-teal-600"></i>
-            <span>Vinted Organiser</span>
-          </h1>
-        </div>
-
-        <button id="btnOpenNewFolderModal" class="w-full hidden md:flex mb-4 py-2.5 px-4 bg-white/80 text-slate-700 font-semibold text-sm rounded-xl border border-white shadow-sm items-center justify-center gap-2">
-          <i class="fa-solid fa-folder-plus text-teal-600"></i>
-          <span>Nueva Carpeta</span>
-        </button>
-
-        <div class="flex md:flex-col gap-1 overflow-x-auto md:overflow-y-auto pb-2 md:pb-0" id="foldersList">
-          <!-- Dynamic Folders -->
-        </div>
-      </div>
-
-      <div class="mt-2 pt-3 border-t border-slate-200/60 text-xs text-slate-500 flex justify-between items-center">
-        <span id="totalItemsCount">0 Prendas</span>
-      </div>
-    </aside>
-
-    <!-- Main Section -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden p-4">
-
-      <!-- Action Toolbar -->
-      <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between pb-3 border-b border-slate-200/60">
-        <div class="flex items-center justify-between sm:justify-start gap-3">
-          <h2 id="currentFolderTitle" class="text-xl md:text-2xl font-bold text-slate-800">Desperdigadas</h2>
-          <span id="currentFolderBadge" class="text-xs px-2.5 py-1 rounded-full bg-slate-200/80 font-bold text-slate-600">0</span>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <input type="text" id="searchInput" placeholder="Buscar..." class="flex-1 sm:w-48 px-3 py-2 bg-white/80 text-sm rounded-xl border border-white focus:outline-none">
-          <button id="btnOpenNewItemModal" class="btn-primary text-sm shrink-0">
-            <i class="fa-solid fa-plus text-xs"></i>
-            <span>Añadir</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Grid Items -->
-      <div class="flex-1 overflow-y-auto py-4">
-        <div id="itemsGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4"></div>
-
-        <div id="emptyState" class="hidden h-full flex flex-col items-center justify-center text-slate-400 py-12 text-center">
-          <i class="fa-solid fa-box-open text-4xl mb-2 opacity-50"></i>
-          <p class="text-sm font-medium">No hay prendas en esta carpeta</p>
-        </div>
-      </div>
-    </main>
-  </div>
-
-  <!-- Modal Folder -->
-  <div id="folderModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-    <div class="glass-card w-full max-w-sm p-5 relative">
-      <h3 class="text-base font-bold text-slate-800 mb-3">Nueva Carpeta</h3>
-      <input type="text" id="folderNameInput" placeholder="Nombre de la carpeta" class="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-sm mb-4">
-      <div class="flex justify-end gap-2">
-        <button id="btnCloseFolderModal" class="px-3 py-2 text-sm font-medium text-slate-600">Cancelar</button>
-        <button id="btnSaveFolder" class="btn-primary text-sm">Guardar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Item -->
-  <div id="itemModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-    <div class="glass-card w-full max-w-sm p-5 relative">
-      <h3 class="text-base font-bold text-slate-800 mb-3">Guardar Prenda</h3>
-
-      <div id="modalImagePreviewContainer" class="hidden mb-3 h-44 w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center relative">
-        <span id="previewLoadingText" class="text-xs text-slate-400 font-medium">Obteniendo imagen...</span>
-        <img id="modalImagePreview" src="" class="w-full h-full object-cover hidden">
-      </div>
-
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 mb-1">Enlace / URL de Vinted</label>
-          <input type="text" id="itemUrlInput" placeholder="Pegar enlace..." class="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs" readonly>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 mb-1">Nombre personalizado</label>
-          <input type="text" id="itemNameInput" placeholder="Ej. Vaqueros Levi's 501" class="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-sm">
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 mb-1">Elegir Carpeta</label>
-          <select id="itemFolderSelect" class="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-sm">
-          </select>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-2 mt-5">
-        <button id="btnCloseItemModal" class="px-3 py-2 text-sm font-medium text-slate-600">Cancelar</button>
-        <button id="btnSaveItem" class="btn-primary text-sm">Guardar en Carpeta</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    let db;
-    let state = {
-      folders: [],
-      items: [],
-      selectedFolderId: 'unclassified',
-      currentImageBase64: ''
-    };
-
-    const foldersList = document.getElementById('foldersList');
-    const itemsGrid = document.getElementById('itemsGrid');
-    const emptyState = document.getElementById('emptyState');
-
-    function initDB() {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open('VintedOrganiserDB', 1);
-        request.onupgradeneeded = (e) => {
-          const database = e.target.result;
-          if (!database.objectStoreNames.contains('folders')) {
-            database.createObjectStore('folders', { keyPath: 'id' });
-          }
-          if (!database.objectStoreNames.contains('items')) {
-            database.createObjectStore('items', { keyPath: 'id' });
-          }
-        };
-        request.onsuccess = (e) => {
-          db = e.target.result;
-          resolve();
-        };
-        request.onerror = (e) => reject(e);
-      });
-    }
-
-    async function loadStorage() {
-      if (!db) await initDB();
-      return new Promise((resolve) => {
-        const tx = db.transaction(['folders', 'items'], 'readonly');
-        const storeFolders = tx.objectStore('folders');
-        const storeItems = tx.objectStore('items');
-
-        const reqFolders = storeFolders.getAll();
-        const reqItems = storeItems.getAll();
-
-        tx.oncomplete = () => {
-          state.folders = reqFolders.result || [];
-          state.items = reqItems.result || [];
-          resolve();
-        };
-      });
-    }
-
-    function saveItemToDB(item) {
-      return new Promise((resolve) => {
-        const tx = db.transaction(['items'], 'readwrite');
-        tx.objectStore('items').put(item);
-        tx.oncomplete = () => resolve();
-      });
-    }
-
-    function saveFolderToDB(folder) {
-      return new Promise((resolve) => {
-        const tx = db.transaction(['folders'], 'readwrite');
-        tx.objectStore('folders').put(folder);
-        tx.oncomplete = () => resolve();
-      });
-    }
-
-    function deleteItemFromDB(id) {
-      return new Promise((resolve) => {
-        const tx = db.transaction(['items'], 'readwrite');
-        tx.objectStore('items').delete(id);
-        tx.oncomplete = () => resolve();
-      });
-    }
-
-    window.addEventListener('DOMContentLoaded', async () => {
-      await initDB();
-      await loadStorage();
-      setupEvents();
-      render();
-      setTimeout(checkIncomingUrl, 200);
-    });
-
-    window.addEventListener('pageshow', async () => {
-      if (db) {
-        await loadStorage();
-        render();
-      }
-    });
-
-    function checkIncomingUrl() {
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        let rawUrl = urlParams.get('importar') || urlParams.get('url');
-
-        if (rawUrl) {
-          let cleanUrl = rawUrl.trim();
-          const match = cleanUrl.match(/https?:\/\/[^\s]+/);
-          if (match) cleanUrl = match[0];
-          
-          openItemModalWithUrl(cleanUrl);
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
-      } catch (err) {
-        console.error("Error al procesar la URL recibida", err);
-      }
-    }
-
-    function setPreviewImage(imgUrl) {
-      const previewImg = document.getElementById('modalImagePreview');
-      const loadingText = document.getElementById('previewLoadingText');
-      state.currentImageBase64 = imgUrl;
-      previewImg.src = imgUrl;
-      previewImg.classList.remove('hidden');
-      loadingText.classList.add('hidden');
-    }
-
-    function openItemModalWithUrl(url) {
-      const itemModal = document.getElementById('itemModal');
-      document.getElementById('itemUrlInput').value = url || '';
-      state.currentImageBase64 = '';
-      
-      const previewContainer = document.getElementById('modalImagePreviewContainer');
-      const previewImg = document.getElementById('modalImagePreview');
-      const loadingText = document.getElementById('previewLoadingText');
-
-      previewContainer.classList.remove('hidden');
-      previewImg.classList.add('hidden');
-      loadingText.classList.remove('hidden');
-      loadingText.textContent = 'Buscando foto del anuncio...';
-
-      // 1. Extraer ID del artículo y Slug
-      let itemId = '';
-      let suggestedName = "Prenda Vinted";
-
-      try {
-        const urlObj = new URL(url);
-        const pathSegments = urlObj.pathname.split('/');
-        const lastSegment = pathSegments.filter(Boolean).pop() || '';
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
         
-        // Extraer ID numérico
-        const idMatch = lastSegment.match(/^(\d+)/);
-        if (idMatch) itemId = idMatch[1];
+        <!-- VISTA 1: TARJETAS DE CARPETAS (HOME) -->
+        <section id="folders-view" class="space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold tracking-tight">Carpetas</h2>
+                <span id="folders-count" class="text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-full">0 carpetas</span>
+            </div>
+            
+            <div id="folders-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                <!-- Se inyecta dinámicamente -->
+            </div>
+        </section>
 
-        // Nombre sugerido
-        let nameClean = lastSegment.replace(/^\d+-/, '').replace(/-/g, ' ');
-        if (nameClean) {
-          suggestedName = nameClean.charAt(0).toUpperCase() + nameClean.slice(1);
+        <!-- VISTA 2: DETALLE DE CARPETA (PRENDAS) -->
+        <section id="folder-detail-view" class="hidden space-y-6">
+            <div class="flex items-center justify-between bg-zinc-900/50 border border-zinc-800/60 p-4 rounded-2xl">
+                <div>
+                    <h2 id="current-folder-name" class="text-xl font-bold tracking-tight text-white">Nombre de Carpeta</h2>
+                    <p id="current-folder-count" class="text-xs text-zinc-400 mt-0.5">0 prendas guardadas</p>
+                </div>
+                <button onclick="deleteCurrentFolder()" class="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2.5 rounded-xl transition text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-trash-can"></i> <span class="hidden sm:inline">Eliminar Carpeta</span>
+                </button>
+            </div>
+
+            <div id="items-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                <!-- Se inyecta dinámicamente -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL: AÑADIR PRENDA NUEVA -->
+    <div id="add-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold tracking-tight">Añadir Prenda</h3>
+                <button onclick="closeAddModal()" class="text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-zinc-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div id="scraping-status" class="hidden bg-zinc-800/60 border border-zinc-700/50 p-3 rounded-2xl text-xs text-zinc-300 flex items-center gap-3">
+                <div class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin shrink-0"></i></div>
+                <span id="scraping-text">Extrayendo datos de Vinted...</span>
+            </div>
+
+            <form id="add-form" onsubmit="handleAddItem(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Enlace de Vinted</label>
+                    <input type="url" id="item-url" required placeholder="https://www.vinted.es/items/..." 
+                        class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Nombre de la Prenda</label>
+                    <input type="text" id="item-title" required placeholder="Ej. Jersey Stradivarius" 
+                        class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Guardar en Carpeta</label>
+                    <select id="item-folder" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                        <!-- Opciones dinámicas -->
+                    </select>
+                </div>
+
+                <!-- Input oculto para la imagen detectada o fallback -->
+                <input type="hidden" id="item-image-url" value="">
+
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeAddModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium py-3 rounded-xl text-sm transition">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold py-3 rounded-xl text-sm transition shadow-sm">Guardar Prenda</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: NUEVA CARPETA -->
+    <div id="new-folder-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold tracking-tight">Nueva Carpeta</h3>
+                <button onclick="closeNewFolderModal()" class="text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-zinc-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="handleCreateFolder(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Nombre de la carpeta</label>
+                    <input type="text" id="new-folder-name" required placeholder="Ej. Marcos, Fiesta, Otoño..." 
+                        class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeNewFolderModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium py-3 rounded-xl text-sm transition">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold py-3 rounded-xl text-sm transition">Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: VISTA PREVIA EN GRANDE Y EDICIÓN DE PRENDA -->
+    <div id="item-detail-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold tracking-tight">Detalle de la Prenda</h3>
+                <button onclick="closeItemDetailModal()" class="text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-zinc-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Imagen grande -->
+            <div class="w-full h-72 sm:h-80 bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800/80 flex items-center justify-center relative">
+                <img id="detail-image" src="" alt="Prenda" class="w-full h-full object-cover">
+                <a id="detail-vinted-link" href="#" target="_blank" class="absolute bottom-3 right-3 bg-zinc-900/90 hover:bg-zinc-900 border border-zinc-700/80 text-white px-3.5 py-2 rounded-xl text-xs font-semibold backdrop-blur-md transition flex items-center gap-2 shadow-lg">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir en Vinted
+                </a>
+            </div>
+
+            <!-- Formulario de edición -->
+            <form id="edit-item-form" onsubmit="handleSaveItemEdit(event)" class="space-y-4">
+                <input type="hidden" id="edit-item-id">
+                
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Nombre</label>
+                    <input type="text" id="edit-item-title" required 
+                        class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Enlace de Vinted</label>
+                    <input type="url" id="edit-item-url" required 
+                        class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Mover a Carpeta</label>
+                    <select id="edit-item-folder" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                        <!-- Opciones dinámicas -->
+                    </select>
+                </div>
+
+                <div class="pt-3 flex items-center justify-between border-t border-zinc-800">
+                    <button type="button" onclick="deleteItemFromDetail()" class="text-red-400 hover:text-red-300 hover:bg-red-500/10 px-4 py-2.5 rounded-xl transition text-sm font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-trash-can"></i> Eliminar Prenda
+                    </button>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="closeItemDetailModal()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-2.5 rounded-xl text-sm font-medium transition">Cancelar</button>
+                        <button type="submit" class="bg-white hover:bg-zinc-200 text-zinc-950 px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm">Guardar Cambios</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- LOGICA JAVASCRIPT & INDEXEDDB -->
+    <script>
+        let db;
+        let currentFolderId = null; // null significa vista de carpetas (Home)
+        let activeEditingItem = null;
+
+        // Inicializar IndexedDB
+        const request = indexedDB.open('VintedWardrobeDB', 2);
+
+        request.onerror = (event) => console.error("Error en IndexedDB:", event.target.error);
+
+        request.onupgradeneeded = (event) => {
+            db = event.target.result;
+            if (!db.objectStoreNames.contains('folders')) {
+                db.createObjectStore('folders', { keyPath: 'id', autoIncrement: true });
+            }
+            if (!db.objectStoreNames.contains('items')) {
+                const itemStore = db.createObjectStore('items', { keyPath: 'id', autoIncrement: true });
+                itemStore.createIndex('folderId', 'folderId', { unique: false });
+            }
+        };
+
+        request.onsuccess = (event) => {
+            db = event.target.result;
+            seedDefaultFolderIfNeeded();
+        };
+
+        function seedDefaultFolderIfNeeded() {
+            const tx = db.transaction('folders', 'readwrite');
+            const store = tx.objectStore('folders');
+            const countReq = store.count();
+
+            countReq.onsuccess = () => {
+                if (countReq.result === 0) {
+                    const addReq = store.add({ name: 'Desperdigados', createdAt: Date.now() });
+                    addReq.onsuccess = () => checkUrlParamsAndLoad();
+                } else {
+                    checkUrlParamsAndLoad();
+                }
+            };
         }
-      } catch (e) {
-        console.log("Error al parsear URL");
-      }
 
-      document.getElementById('itemNameInput').value = suggestedName;
-      populateSelect();
-      itemModal.classList.remove('hidden');
+        function checkUrlParamsAndLoad() {
+            loadFoldersView();
 
-      if (!url) return;
+            // Comprobar si viene desde el atajo de iOS con parámetros ?url=...&title=...
+            const params = new URLSearchParams(window.location.search);
+            const shareUrl = params.get('url');
+            const shareTitle = params.get('title');
 
-      // 2. Método Robusto: Usar API o CDN directo
-      const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}&filter=image`;
+            if (shareUrl) {
+                openAddModal(shareUrl, shareTitle || '');
+                // Limpiar la URL sin recargar la página
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
 
-      fetch(microlinkUrl)
-        .then(r => r.json())
-        .then(res => {
-          if (res && res.data && res.data.image && res.data.image.url) {
-            setPreviewImage(res.data.image.url);
-          } else {
-            throw new Error('Microlink sin imagen');
-          }
-        })
-        .catch(() => {
-          // Fallback vía JSONP Proxy seguro a metatags
-          const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
-          fetch(proxyUrl)
-            .then(r => r.text())
-            .then(html => {
-              const match = html.match(/property=["']og:image["']\s+content=["']([^"']+)["']/i) ||
-                            html.match(/content=["']([^"']+)["']\s+property=["']og:image["']/i);
-              if (match && match[1]) {
-                setPreviewImage(match[1]);
-              } else {
-                loadingText.textContent = 'Prenda guardada (foto no disponible por Vinted)';
-              }
-            })
-            .catch(() => {
-              loadingText.textContent = 'Prenda lista para guardar';
+        // --- GESTIÓN DE VISTAS (HOME vs CARPETA) ---
+        function goHome() {
+            currentFolderId = null;
+            document.getElementById('back-btn').classList.add('hidden');
+            document.getElementById('app-title').innerHTML = `<i class="fa-solid fa-shirt text-zinc-400"></i> Mi Armario`;
+            document.getElementById('folders-view').classList.remove('hidden');
+            document.getElementById('folder-detail-view').classList.add('hidden');
+            loadFoldersView();
+        }
+
+        function openFolder(folderId, folderName) {
+            currentFolderId = folderId;
+            document.getElementById('back-btn').classList.remove('hidden');
+            document.getElementById('app-title').textContent = folderName;
+            document.getElementById('folders-view').classList.add('hidden');
+            document.getElementById('folder-detail-view').classList.remove('hidden');
+            loadFolderItems(folderId, folderName);
+        }
+
+        // --- CARGAR CARPETAS (HOME GRID) ---
+        function loadFoldersView() {
+            const tx = db.transaction(['folders', 'items'], 'readonly');
+            const folderStore = tx.objectStore('folders');
+            const itemStore = tx.index('folderId');
+            const foldersReq = folderStore.getAll();
+
+            foldersReq.onsuccess = () => {
+                const folders = foldersReq.result;
+                const grid = document.getElementById('folders-grid');
+                document.getElementById('folders-count').textContent = `${folders.length} ${folders.length === 1 ? 'carpeta' : 'carpetas'}`;
+                grid.innerHTML = '';
+
+                if (folders.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full text-center py-12 text-zinc-500 text-sm">No hay carpetas creadas.</div>`;
+                    return;
+                }
+
+                folders.forEach(folder => {
+                    // Buscar elementos de esta carpeta para sacar miniatura de portada
+                    const itemReq = itemStore.getAll(folder.id);
+                    itemReq.onsuccess = () => {
+                        const items = itemReq.result;
+                        const coverImg = items.length > 0 ? items[items.length - 1].image : null;
+                        const initial = folder.name.charAt(0).toUpperCase();
+
+                        const card = document.createElement('div');
+                        card.className = "group bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col";
+                        card.onclick = () => openFolder(folder.id, folder.name);
+
+                        let coverHTML = '';
+                        if (coverImg && coverImg.startsWith('http')) {
+                            coverHTML = `<img src="${coverImg}" class="w-full h-44 sm:h-52 object-cover group-hover:scale-105 transition duration-500" alt="${folder.name}">`;
+                        } else {
+                            coverHTML = `<div class="w-full h-44 sm:h-52 bg-zinc-800 flex items-center justify-center text-zinc-500 font-bold text-4xl group-hover:scale-105 transition duration-500">${initial}</div>`;
+                        }
+
+                        card.innerHTML = `
+                            <div class="relative overflow-hidden bg-zinc-950">${coverHTML}</div>
+                            <div class="p-4 flex items-center justify-between bg-zinc-900">
+                                <div>
+                                    <h3 class="font-bold text-sm sm:text-base text-white tracking-tight">${folder.name}</h3>
+                                    <p class="text-xs text-zinc-400 mt-0.5">${items.length} ${items.length === 1 ? 'prenda' : 'prendas'}</p>
+                                </div>
+                                <div class="w-8 h-8 rounded-full bg-zinc-800/80 flex items-center justify-center text-zinc-400 group-hover:bg-white group-hover:text-zinc-950 transition">
+                                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                                </div>
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    };
+                });
+            };
+        }
+
+        // --- CARGAR PRENDAS DENTRO DE UNA CARPETA ---
+        function loadFolderItems(folderId, folderName) {
+            const tx = db.transaction('items', 'readonly');
+            const store = tx.index('folderId');
+            const req = store.getAll(folderId);
+
+            req.onsuccess = () => {
+                const items = req.result;
+                const grid = document.getElementById('items-grid');
+                document.getElementById('current-folder-name').textContent = folderName;
+                document.getElementById('current-folder-count').textContent = `${items.length} ${items.length === 1 ? 'prenda guardada' : 'prendas guardadas'}`;
+                grid.innerHTML = '';
+
+                if (items.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-span-full text-center py-16 space-y-3">
+                            <div class="w-12 h-12 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center mx-auto text-zinc-500 text-lg">
+                                <i class="fa-solid fa-shirt"></i>
+                            </div>
+                            <p class="text-zinc-400 text-sm">Esta carpeta está vacía.</p>
+                        </div>`;
+                    return;
+                }
+
+                items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = "group bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col";
+                    card.onclick = () => openItemDetailModal(item);
+
+                    card.innerHTML = `
+                        <div class="relative overflow-hidden bg-zinc-950 h-48 sm:h-60">
+                            <img src="${item.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="${item.title}">
+                        </div>
+                        <div class="p-4 bg-zinc-950 flex flex-col justify-between flex-1">
+                            <h4 class="font-medium text-xs sm:text-sm text-zinc-200 line-clamp-2 leading-snug">${item.title}</h4>
+                            <div class="mt-3 pt-3 border-t border-zinc-9ut flex items-center justify-between text-xs text-zinc-500">
+                                <span>Ver detalles</span>
+                                <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-1 transition text-zinc-400"></i>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            };
+        }
+
+        // --- CREAR NUEVA CARPETA ---
+        function openNewFolderModal() {
+            document.getElementById('new-folder-modal').classList.remove('hidden');
+            document.getElementById('new-folder-name').value = '';
+            document.getElementById('new-folder-name').focus();
+        }
+        function closeNewFolderModal() {
+            document.getElementById('new-folder-modal').classList.add('hidden');
+        }
+        function handleCreateFolder(e) {
+            e.preventDefault();
+            const name = document.getElementById('new-folder-name').value.trim();
+            if (!name) return;
+
+            const tx = db.transaction('folders', 'readwrite');
+            const store = tx.objectStore('folders');
+            const req = store.add({ name, createdAt: Date.now() });
+
+            req.onsuccess = () => {
+                closeNewFolderModal();
+                loadFoldersView();
+            };
+        }
+
+        // --- ELIMINAR CARPETA ACTUAL ---
+        function deleteCurrentFolder() {
+            if (!currentFolderId) return;
+            if (!confirm("¿Seguro que quieres eliminar esta carpeta? Las prendas dentro de ella también se eliminarán.")) return;
+
+            const tx = db.transaction(['folders', 'items'], 'readwrite');
+            const folderStore = tx.objectStore('folders');
+            const itemStore = tx.index('folderId');
+
+            // Borrar items de la carpeta
+            const itemReq = itemStore.getAllKeys(currentFolderId);
+            itemReq.onsuccess = () => {
+                const itemStoreRw = tx.objectStore('items');
+                itemReq.result.forEach(itemId => itemStoreRw.delete(itemId));
+                
+                // Borrar carpeta
+                folderStore.delete(currentFolderId);
+
+                tx.oncomplete = () => {
+                    goHome();
+                };
+            };
+        }
+
+        // --- MODAL AÑADIR PRENDA Y SCRAPING ---
+        async function openAddModal(prefillUrl = '', prefillTitle = '') {
+            document.getElementById('add-modal').classList.remove('hidden');
+            document.getElementById('item-url').value = prefillUrl;
+            document.getElementById('item-title').value = prefillTitle;
+            document.getElementById('item-image-url').value = '';
+
+            // Poblar selector de carpetas
+            await updateFolderSelects();
+            if (currentFolderId) {
+                document.getElementById('item-folder').value = currentFolderId;
+            }
+
+            if (prefillUrl) {
+                extractVintedData(prefillUrl);
+            } else {
+                document.getElementById('item-url').focus();
+            }
+        }
+
+        function closeAddModal() {
+            document.getElementById('add-modal').classList.add('hidden');
+            document.getElementById('scraping-status').classList.add('hidden');
+        }
+
+        async function updateFolderSelects() {
+            return new Promise((resolve) => {
+                const tx = db.transaction('folders', 'readonly');
+                const store = tx.objectStore('folders');
+                const req = store.getAll();
+
+                req.onsuccess = () => {
+                    const folders = req.result;
+                    const selects = [document.getElementById('item-folder'), document.getElementById('edit-item-folder')];
+                    
+                    selects.forEach(select => {
+                        if (!select) return;
+                        select.innerHTML = '';
+                        folders.forEach(f => {
+                            const opt = document.createElement('option');
+                            opt.value = f.id;
+                            opt.textContent = f.name;
+                            select.appendChild(opt);
+                        });
+                    });
+                    resolve();
+                };
             });
-        });
-    }
-
-    function render() {
-      foldersList.innerHTML = '';
-      
-      const unclassifiedCount = state.items.filter(i => i.folderId === 'unclassified').length;
-      const isUnActive = state.selectedFolderId === 'unclassified';
-      
-      const unDiv = document.createElement('div');
-      unDiv.className = `px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between gap-2 cursor-pointer shrink-0 ${isUnActive ? 'bg-teal-600 text-white' : 'bg-white/80 text-slate-700'}`;
-      unDiv.onclick = () => { state.selectedFolderId = 'unclassified'; render(); };
-      unDiv.innerHTML = `<span>Desperdigadas</span><span class="opacity-80">(${unclassifiedCount})</span>`;
-      foldersList.appendChild(unDiv);
-
-      state.folders.forEach(f => {
-        const count = state.items.filter(i => i.folderId === f.id).length;
-        const isActive = state.selectedFolderId === f.id;
-        const fDiv = document.createElement('div');
-        fDiv.className = `px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between gap-2 cursor-pointer shrink-0 ${isActive ? 'bg-teal-600 text-white' : 'bg-white/80 text-slate-700'}`;
-        fDiv.onclick = () => { state.selectedFolderId = f.id; render(); };
-        fDiv.innerHTML = `<span>${f.name}</span><span class="opacity-80">(${count})</span>`;
-        foldersList.appendChild(fDiv);
-      });
-
-      itemsGrid.innerHTML = '';
-      const currentFolder = state.folders.find(f => f.id === state.selectedFolderId);
-      document.getElementById('currentFolderTitle').textContent = currentFolder ? currentFolder.name : 'Desperdigadas';
-
-      const filtered = state.items.filter(i => i.folderId === state.selectedFolderId);
-      document.getElementById('currentFolderBadge').textContent = filtered.length;
-
-      if (filtered.length === 0) {
-        emptyState.classList.remove('hidden');
-      } else {
-        emptyState.classList.add('hidden');
-        filtered.forEach(item => {
-          const card = document.createElement('div');
-          card.className = 'glass-card p-2.5 flex flex-col justify-between';
-          
-          const defaultPlaceholder = 'https://placehold.co/300x300/e2e8f0/64748b?text=Vinted';
-          const imgSrc = (item.image && item.image.trim() !== '') ? item.image : defaultPlaceholder;
-
-          card.innerHTML = `
-            <div>
-              <div class="h-28 w-full bg-slate-200 rounded-lg overflow-hidden mb-2 relative flex items-center justify-center">
-                <img src="${imgSrc}" class="w-full h-full object-cover" onerror="this.src='${defaultPlaceholder}'">
-              </div>
-              <p class="font-bold text-xs text-slate-800 truncate">${item.name}</p>
-            </div>
-            <div class="flex items-center justify-between mt-2 pt-1 border-t border-slate-200/50">
-              <a href="${item.url || '#'}" target="_blank" class="text-[10px] text-teal-600 font-semibold">Ver Vinted</a>
-              <button onclick="deleteItem('${item.id}')" class="text-[10px] text-rose-500"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          `;
-          itemsGrid.appendChild(card);
-        });
-      }
-
-      document.getElementById('totalItemsCount').textContent = `${state.items.length} Prendas`;
-    }
-
-    function setupEvents() {
-      const folderModal = document.getElementById('folderModal');
-      const itemModal = document.getElementById('itemModal');
-
-      const openFolderModal = () => {
-        document.getElementById('folderNameInput').value = '';
-        folderModal.classList.remove('hidden');
-      };
-
-      document.getElementById('btnOpenNewFolderModal').onclick = openFolderModal;
-      document.getElementById('btnMobileAddFolder').onclick = openFolderModal;
-      document.getElementById('btnCloseFolderModal').onclick = () => folderModal.classList.add('hidden');
-      
-      document.getElementById('btnSaveFolder').onclick = async () => {
-        const val = document.getElementById('folderNameInput').value.trim();
-        if (val) {
-          const newFolder = { id: 'f_' + Date.now(), name: val };
-          state.folders.push(newFolder);
-          await saveFolderToDB(newFolder);
-          folderModal.classList.add('hidden');
-          render();
         }
-      };
 
-      document.getElementById('btnOpenNewItemModal').onclick = () => {
-        document.getElementById('itemNameInput').value = '';
-        document.getElementById('itemUrlInput').value = '';
-        state.currentImageBase64 = '';
-        document.getElementById('modalImagePreviewContainer').classList.add('hidden');
-        populateSelect();
-        itemModal.classList.remove('hidden');
-      };
+        // Extractor con respaldo robusto
+        async function extractVintedData(url) {
+            const statusBox = document.getElementById('scraping-status');
+            const statusText = document.getElementById('scraping-text');
+            statusBox.classList.remove('hidden');
+            statusText.textContent = "Extrayendo imagen de Vinted...";
 
-      document.getElementById('btnCloseItemModal').onclick = () => itemModal.classList.add('hidden');
+            let imageUrl = '';
+            const proxies = [
+                `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+            ];
 
-      document.getElementById('btnSaveItem').onclick = async () => {
-        const name = document.getElementById('itemNameInput').value.trim();
-        const url = document.getElementById('itemUrlInput').value.trim();
+            for (let proxy of proxies) {
+                try {
+                    const res = await fetch(proxy);
+                    const html = proxy.includes('allorigins') ? (await res.json()).contents : await res.text();
+                    
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
 
-        if (name) {
-          const newItem = {
-            id: 'i_' + Date.now(),
-            name: name,
-            folderId: document.getElementById('itemFolderSelect').value,
-            url: url,
-            image: state.currentImageBase64 || 'https://placehold.co/300x300/e2e8f0/64748b?text=Vinted'
-          };
+                    const ogImage = doc.querySelector('meta[property="og:image"]');
+                    const ogTitle = doc.querySelector('meta[property="og:title"]');
 
-          state.items.push(newItem);
-          await saveItemToDB(newItem);
-          itemModal.classList.add('hidden');
-          render();
+                    if (ogImage && ogImage.content) {
+                        imageUrl = ogImage.content;
+                    }
+                    if (ogTitle && !document.getElementById('item-title').value) {
+                        document.getElementById('item-title').value = ogTitle.content;
+                    }
+                    if (imageUrl) break;
+                } catch (e) {
+                    console.warn("Fallo con proxy, intentando siguiente...", e);
+                }
+            }
+
+            if (imageUrl) {
+                document.getElementById('item-image-url').value = imageUrl;
+                statusText.textContent = "¡Imagen extraída con éxito!";
+            } else {
+                // Fallback robusto a plantilla gris genérica
+                document.getElementById('item-image-url').value = "https://placehold.co/600x800/18181b/71717a?text=20";
+                statusText.textContent = "Vinted protegido. Guardando con miniatura estándar.";
+            }
+
+            setTimeout(() => statusBox.classList.add('hidden'), 2500);
         }
-      };
-    }
 
-    function populateSelect() {
-      const sel = document.getElementById('itemFolderSelect');
-      sel.innerHTML = '<option value="unclassified">Desperdigadas</option>';
-      state.folders.forEach(f => {
-        const optEl = document.createElement('option');
-        optEl.value = f.id;
-        optEl.textContent = f.name;
-        sel.appendChild(optEl);
-      });
-      sel.value = state.selectedFolderId;
-    }
+        function handleAddItem(e) {
+            e.preventDefault();
+            const url = document.getElementById('item-url').value;
+            const title = document.getElementById('item-title').value;
+            const folderId = parseInt(document.getElementById('item-folder').value);
+            let image = document.getElementById('item-image-url').value;
 
-    async function deleteItem(id) {
-      state.items = state.items.filter(i => i.id !== id);
-      await deleteItemFromDB(id);
-      render();
-    }
-  </script>
+            if (!image) {
+                image = "https://placehold.co/600x800/18181b/71717a?text=20";
+            }
+
+            const tx = db.transaction('items', 'readwrite');
+            const store = tx.objectStore('items');
+            const req = store.add({ folderId, title, url, image, createdAt: Date.now() });
+
+            req.onsuccess = () => {
+                closeAddModal();
+                if (currentFolderId) {
+                    openFolder(currentFolderId, document.getElementById('current-folder-name').textContent);
+                } else {
+                    loadFoldersView();
+                }
+            };
+        }
+
+        // --- VISTA PREVIA EN GRANDE Y EDICIÓN DE PRENDA ---
+        async function openItemDetailModal(item) {
+            activeEditingItem = item;
+            document.getElementById('detail-image').src = item.image;
+            document.getElementById('detail-vinted-link').href = item.url;
+            document.getElementById('edit-item-id').value = item.id;
+            document.getElementById('edit-item-title').value = item.title;
+            document.getElementById('edit-item-url').value = item.url;
+
+            await updateFolderSelects();
+            document.getElementById('edit-item-folder').value = item.folderId;
+
+            document.getElementById('item-detail-modal').classList.remove('hidden');
+        }
+
+        function closeItemDetailModal() {
+            document.getElementById('item-detail-modal').classList.add('hidden');
+            activeEditingItem = null;
+        }
+
+        function handleSaveItemEdit(e) {
+            e.preventDefault();
+            if (!activeEditingItem) return;
+
+            const updatedTitle = document.getElementById('edit-item-title').value;
+            const updatedUrl = document.getElementById('edit-item-url').value;
+            const updatedFolderId = parseInt(document.getElementById('edit-item-folder').value);
+
+            const tx = db.transaction('items', 'readwrite');
+            const store = tx.objectStore('items');
+
+            const updatedItem = {
+                ...activeEditingItem,
+                title: updatedTitle,
+                url: updatedUrl,
+                folderId: updatedFolderId
+            };
+
+            const req = store.put(updatedItem);
+
+            req.onsuccess = () => {
+                closeItemDetailModal();
+                if (currentFolderId) {
+                    openFolder(currentFolderId, document.getElementById('current-folder-name').textContent);
+                } else {
+                    loadFoldersView();
+                }
+            };
+        }
+
+        function deleteItemFromDetail() {
+            if (!activeEditingItem) return;
+            if (!confirm("¿Seguro que quieres eliminar esta prenda?")) return;
+
+            const tx = db.transaction('items', 'readwrite');
+            const store = tx.objectStore('items');
+            const req = store.delete(activeEditingItem.id);
+
+            req.onsuccess = () => {
+                closeItemDetailModal();
+                if (currentFolderId) {
+                    openFolder(currentFolderId, document.getElementById('current-folder-name').textContent);
+                } else {
+                    loadFoldersView();
+                }
+            };
+        }
+    </script>
 </body>
 </html>
