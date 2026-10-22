@@ -93,7 +93,7 @@
 
                 <div>
                     <label class="block text-xs font-medium text-zinc-400 mb-1.5">Nombre de la Prenda</label>
-                    <input type="text" id="item-title" required placeholder="Ej. Jersey Stradivarius" 
+                    <input type="text" id="item-title" required placeholder="Ej. Jersey Vinted" 
                         class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
                 </div>
 
@@ -126,7 +126,7 @@
             <form onsubmit="handleCreateFolder(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-medium text-zinc-400 mb-1.5">Nombre de la carpeta</label>
-                    <input type="text" id="new-folder-name" required placeholder="Ej. Marcos, Fiesta..." 
+                    <input type="text" id="new-folder-name" required placeholder="Ej. Marcos, Carol..." 
                         class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
                 </div>
                 <div class="flex gap-3">
@@ -189,31 +189,33 @@
         </div>
     </div>
 
-    <!-- SCRIPT DE GESTIÓN -->
+    <!-- SCRIPT CORREGIDO ULTRA-COMPATIBLE -->
     <script>
         let db;
         let currentFolderId = null;
         let activeEditingItem = null;
 
-        const request = indexedDB.open('VintedWardrobeDB', 5);
+        function initAppDatabase() {
+            const request = indexedDB.open('VintedArmarioAppDB', 1);
 
-        request.onerror = (event) => console.error("Error en IndexedDB:", event.target.error);
+            request.onerror = (e) => console.error("Error DB:", e);
 
-        request.onupgradeneeded = (event) => {
-            db = event.target.result;
-            if (!db.objectStoreNames.contains('folders')) {
-                db.createObjectStore('folders', { keyPath: 'id', autoIncrement: true });
-            }
-            if (!db.objectStoreNames.contains('items')) {
-                const itemStore = db.createObjectStore('items', { keyPath: 'id', autoIncrement: true });
-                itemStore.createIndex('folderId', 'folderId', { unique: false });
-            }
-        };
+            request.onupgradeneeded = (event) => {
+                const dbRef = event.target.result;
+                if (!dbRef.objectStoreNames.contains('folders')) {
+                    dbRef.createObjectStore('folders', { keyPath: 'id', autoIncrement: true });
+                }
+                if (!dbRef.objectStoreNames.contains('items')) {
+                    const itemStore = dbRef.createObjectStore('items', { keyPath: 'id', autoIncrement: true });
+                    itemStore.createIndex('folderId', 'folderId', { unique: false });
+                }
+            };
 
-        request.onsuccess = (event) => {
-            db = event.target.result;
-            seedDefaultFolderIfNeeded();
-        };
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                seedDefaultFolderIfNeeded();
+            };
+        }
 
         function seedDefaultFolderIfNeeded() {
             const tx = db.transaction('folders', 'readwrite');
@@ -222,8 +224,10 @@
 
             countReq.onsuccess = () => {
                 if (countReq.result === 0) {
-                    const addReq = store.add({ name: 'Desperdigadas', createdAt: Date.now() });
-                    addReq.onsuccess = () => checkUrlParamsAndLoad();
+                    store.add({ name: 'Desperdigadas', createdAt: Date.now() });
+                    store.add({ name: 'Carol', createdAt: Date.now() });
+                    store.add({ name: 'Marcos', createdAt: Date.now() });
+                    tx.oncomplete = () => checkUrlParamsAndLoad();
                 } else {
                     checkUrlParamsAndLoad();
                 }
@@ -233,14 +237,15 @@
         function checkUrlParamsAndLoad() {
             loadFoldersView();
 
+            // DETECCIÓN MULTI-PARÁMETRO PARA EL ATAJO DE IOS
             const params = new URLSearchParams(window.location.search);
-            const rawShare = params.get('url') || params.get('text');
+            const rawShare = params.get('importar') || params.get('url') || params.get('text');
             const shareTitle = params.get('title');
 
             if (rawShare) {
                 const shareUrl = extractFirstUrl(rawShare);
                 if (shareUrl) {
-                    openAddModal(shareUrl, shareTitle || '');
+                    openAddModal(shareUrl, shareTitle || 'Nueva prenda de Vinted');
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
             }
@@ -270,6 +275,7 @@
         }
 
         function loadFoldersView() {
+            if (!db) return;
             const tx = db.transaction(['folders', 'items'], 'readonly');
             const folderStore = tx.objectStore('folders');
             const itemStore = tx.index('folderId');
@@ -278,7 +284,7 @@
             foldersReq.onsuccess = () => {
                 const folders = foldersReq.result;
                 const grid = document.getElementById('folders-grid');
-                document.getElementById('folders-count').textContent = `${folders.length}${folders.length === 1 ? 'carpeta' : 'carpetas'}`;
+                document.getElementById('folders-count').textContent = `${folders.length} ${folders.length === 1 ? 'carpeta' : 'carpetas'}`;
                 grid.innerHTML = '';
 
                 if (folders.length === 0) {
@@ -309,7 +315,7 @@
                             <div class="p-4 flex items-center justify-between bg-zinc-900">
                                 <div>
                                     <h3 class="font-bold text-sm sm:text-base text-white tracking-tight">${folder.name}</h3>
-                                    <p class="text-xs text-zinc-400 mt-0.5">${items.length}${items.length === 1 ? 'prenda' : 'prendas'}</p>
+                                    <p class="text-xs text-zinc-400 mt-0.5">${items.length} ${items.length === 1 ? 'prenda' : 'prendas'}</p>
                                 </div>
                                 <div class="w-8 h-8 rounded-full bg-zinc-800/80 flex items-center justify-center text-zinc-400 group-hover:bg-white group-hover:text-zinc-950 transition">
                                     <i class="fa-solid fa-chevron-right text-xs"></i>
@@ -331,10 +337,250 @@
                 const items = req.result;
                 const grid = document.getElementById('items-grid');
                 document.getElementById('current-folder-name').textContent = folderName;
-                document.getElementById('current-folder-count').textContent = `${items.length}${items.length === 1 ? 'prenda guardada' : 'prendas guardadas'}`;
+                document.getElementById('current-folder-count').textContent = `${items.length} ${items.length === 1 ? 'prenda guardada' : 'prendas guardadas'}`;
                 grid.innerHTML = '';
 
                 if (items.length === 0) {
                     grid.innerHTML = `
                         <div class="col-span-full text-center py-16 space-y-3">
-                            <div class="w-12 h-12 bg-zinc-900 border border-zinc-
+                            <div class="w-12 h-12 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center mx-auto text-zinc-500 text-lg">
+                                <i class="fa-solid fa-shirt"></i>
+                            </div>
+                            <p class="text-zinc-400 text-sm">Esta carpeta está vacía.</p>
+                        </div>`;
+                    return;
+                }
+
+                items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = "group bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col";
+                    card.onclick = () => openItemDetailModal(item);
+
+                    card.innerHTML = `
+                        <div class="relative overflow-hidden bg-zinc-950 h-48 sm:h-60">
+                            <img src="${item.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="${item.title}">
+                        </div>
+                        <div class="p-4 bg-zinc-950 flex flex-col justify-between flex-1">
+                            <h4 class="font-medium text-xs sm:text-sm text-zinc-200 line-clamp-2 leading-snug">${item.title}</h4>
+                            <div class="mt-3 pt-3 border-t border-zinc-900 flex items-center justify-between text-xs text-zinc-500">
+                                <span>Ver detalles</span>
+                                <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-1 transition text-zinc-400"></i>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            };
+        }
+
+        function openNewFolderModal() {
+            document.getElementById('new-folder-modal').classList.remove('hidden');
+            document.getElementById('new-folder-name').value = '';
+            document.getElementById('new-folder-name').focus();
+        }
+        function closeNewFolderModal() {
+            document.getElementById('new-folder-modal').classList.add('hidden');
+        }
+
+        function handleCreateFolder(e) {
+            e.preventDefault();
+            const name = document.getElementById('new-folder-name').value.trim();
+            if (!name || !db) return;
+
+            const tx = db.transaction('folders', 'readwrite');
+            const store = tx.objectStore('folders');
+            const req = store.add({ name, createdAt: Date.now() });
+
+            req.onsuccess = () => {
+                closeNewFolderModal();
+                loadFoldersView();
+            };
+        }
+
+        function deleteCurrentFolder() {
+            if (!currentFolderId) return;
+            if (!confirm("¿Seguro que quieres eliminar esta carpeta y sus prendas?")) return;
+
+            const tx = db.transaction(['folders', 'items'], 'readwrite');
+            const folderStore = tx.objectStore('folders');
+            const itemStore = tx.index('folderId');
+
+            const itemReq = itemStore.getAllKeys(currentFolderId);
+            itemReq.onsuccess = () => {
+                const itemStoreRw = tx.objectStore('items');
+                itemReq.result.forEach(itemId => itemStoreRw.delete(itemId));
+                folderStore.delete(currentFolderId);
+
+                tx.oncomplete = () => {
+                    goHome();
+                };
+            };
+        }
+
+        async function openAddModal(prefillUrl = '', prefillTitle = '') {
+            document.getElementById('add-modal').classList.remove('hidden');
+            document.getElementById('item-url').value = prefillUrl;
+            document.getElementById('item-title').value = prefillTitle;
+            document.getElementById('item-image-url').value = '';
+
+            await updateFolderSelects();
+            if (currentFolderId) {
+                document.getElementById('item-folder').value = currentFolderId;
+            }
+
+            if (prefillUrl) {
+                extractVintedData(prefillUrl);
+            } else {
+                document.getElementById('item-url').focus();
+            }
+        }
+
+        function closeAddModal() {
+            document.getElementById('add-modal').classList.add('hidden');
+            document.getElementById('scraping-status').classList.add('hidden');
+        }
+
+        async function updateFolderSelects() {
+            return new Promise((resolve) => {
+                if (!db) return resolve();
+                const tx = db.transaction('folders', 'readonly');
+                const store = tx.objectStore('folders');
+                const req = store.getAll();
+
+                req.onsuccess = () => {
+                    const folders = req.result;
+                    const selects = [document.getElementById('item-folder'), document.getElementById('edit-item-folder')];
+                    
+                    selects.forEach(select => {
+                        if (!select) return;
+                        select.innerHTML = '';
+                        folders.forEach(f => {
+                            const opt = document.createElement('option');
+                            opt.value = f.id;
+                            opt.textContent = f.name;
+                            select.appendChild(opt);
+                        });
+                    });
+                    resolve();
+                };
+            });
+        }
+
+        async function extractVintedData(url) {
+            const statusBox = document.getElementById('scraping-status');
+            const statusText = document.getElementById('scraping-text');
+            statusBox.classList.remove('hidden');
+            statusText.textContent = "Extrayendo imagen de Vinted...";
+
+            let imageUrl = '';
+            const proxies = [
+                `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+            ];
+
+            for (let proxy of proxies) {
+                try {
+                    const res = await fetch(proxy);
+                    const html = proxy.includes('allorigins') ? (await res.json()).contents : await res.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    const ogImage = doc.querySelector('meta[property="og:image"]');
+                    const ogTitle = doc.querySelector('meta[property="og:title"]');
+
+                    if (ogImage && ogImage.content) imageUrl = ogImage.content;
+                    if (ogTitle && (!document.getElementById('item-title').value || document.getElementById('item-title').value === 'Nueva prenda de Vinted')) {
+                        document.getElementById('item-title').value = ogTitle.content;
+                    }
+                    if (imageUrl) break;
+                } catch (e) {}
+            }
+
+            if (imageUrl) {
+                document.getElementById('item-image-url').value = imageUrl;
+                statusText.textContent = "¡Imagen extraída con éxito!";
+            } else {
+                document.getElementById('item-image-url').value = "https://placehold.co/600x800/18181b/71717a?text=Vinted";
+                statusText.textContent = "Guardando con miniatura estándar.";
+            }
+
+            setTimeout(() => statusBox.classList.add('hidden'), 2500);
+        }
+
+        function handleAddItem(e) {
+            e.preventDefault();
+            const url = document.getElementById('item-url').value;
+            const title = document.getElementById('item-title').value;
+            const folderId = parseInt(document.getElementById('item-folder').value);
+            let image = document.getElementById('item-image-url').value || "https://placehold.co/600x800/18181b/71717a?text=Vinted";
+
+            const tx = db.transaction('items', 'readwrite');
+            const store = tx.objectStore('items');
+            const req = store.add({ folderId, title, url, image, createdAt: Date.now() });
+
+            req.onsuccess = () => {
+                closeAddModal();
+                goHome();
+            };
+        }
+
+        async function openItemDetailModal(item) {
+            activeEditingItem = item;
+            document.getElementById('detail-image').src = item.image;
+            document.getElementById('detail-vinted-link').href = item.url;
+            document.getElementById('edit-item-id').value = item.id;
+            document.getElementById('edit-item-title').value = item.title;
+            document.getElementById('edit-item-url').value = item.url;
+
+            await updateFolderSelects();
+            document.getElementById('edit-item-folder').value = item.folderId;
+
+            document.getElementById('item-detail-modal').classList.remove('hidden');
+        }
+
+        function closeItemDetailModal() {
+            document.getElementById('item-detail-modal').classList.add('hidden');
+            activeEditingItem = null;
+        }
+
+        function handleSaveItemEdit(e) {
+            e.preventDefault();
+            if (!activeEditingItem) return;
+
+            const updatedTitle = document.getElementById('edit-item-title').value;
+            const updatedUrl = document.getElementById('edit-item-url').value;
+            const updatedFolderId = parseInt(document.getElementById('edit-item-folder').value);
+
+            const tx = db.transaction('items', 'readwrite');
+            const store = tx.objectStore('items');
+
+            const updatedItem = {
+                ...activeEditingItem,
+                title: updatedTitle,
+                url: updatedUrl,
+                folderId: updatedFolderId
+            };
+
+            store.put(updatedItem).onsuccess = () => {
+                closeItemDetailModal();
+                goHome();
+            };
+        }
+
+        function deleteItemFromDetail() {
+            if (!activeEditingItem) return;
+            if (!confirm("¿Seguro que quieres eliminar esta prenda?")) return;
+
+            const tx = db.transaction('items', 'readwrite');
+            const store = tx.objectStore('items');
+            store.delete(activeEditingItem.id).onsuccess = () => {
+                closeItemDetailModal();
+                goHome();
+            };
+        }
+
+        // Cargar base de datos inmediatamente
+        window.addEventListener('DOMContentLoaded', initAppDatabase);
+    </script>
+</body>
+</html>
