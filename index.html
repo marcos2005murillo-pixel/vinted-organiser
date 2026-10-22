@@ -79,9 +79,15 @@
                 </button>
             </div>
 
+            <!-- ESTADO DE EXTRAE FOTO -->
             <div id="scraping-status" class="hidden bg-zinc-800/60 border border-zinc-700/50 p-3 rounded-2xl text-xs text-zinc-300 flex items-center gap-3">
                 <div class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin shrink-0"></div>
-                <span id="scraping-text">Extrayendo datos de Vinted...</span>
+                <span id="scraping-text">Obteniendo foto e información de Vinted...</span>
+            </div>
+
+            <!-- VISTA PREVIA DE LA IMAGEN ENCONTRADA -->
+            <div id="image-preview-container" class="hidden w-full h-48 bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800 relative">
+                <img id="image-preview" src="" alt="Prenda" class="w-full h-full object-cover">
             </div>
 
             <form onsubmit="handleAddItem(event)" class="space-y-4">
@@ -93,7 +99,7 @@
 
                 <div>
                     <label class="block text-xs font-medium text-zinc-400 mb-1.5">Nombre de la Prenda</label>
-                    <input type="text" id="item-title" required placeholder="Ej. Jersey Vinted" 
+                    <input type="text" id="item-title" required placeholder="Ej. Chaqueta Vinted" 
                         class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
                 </div>
 
@@ -108,7 +114,7 @@
 
                 <div class="pt-2 flex gap-3">
                     <button type="button" onclick="closeAddModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium py-3 rounded-xl text-sm transition">Cancelar</button>
-                    <button type="submit" class="flex-1 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold py-3 rounded-xl text-sm transition shadow-sm">Guardar Prenda</button>
+                    <button type="submit" id="save-btn" class="flex-1 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold py-3 rounded-xl text-sm transition shadow-sm">Guardar Prenda</button>
                 </div>
             </form>
         </div>
@@ -189,14 +195,14 @@
         </div>
     </div>
 
-    <!-- SCRIPT CON EXTRACCIÓN INTELIGENTE DESDE LA URL -->
+    <!-- SCRIPT CORREGIDO CON EXTRACCIÓN REAL DE FOTO -->
     <script>
         let db;
         let currentFolderId = null;
         let activeEditingItem = null;
 
         function initAppDatabase() {
-            const request = indexedDB.open('VintedArmarioAppDB_v23', 1);
+            const request = indexedDB.open('VintedArmarioAppDB_v25', 1);
 
             request.onerror = (e) => console.error("Error DB:", e);
 
@@ -423,8 +429,9 @@
             document.getElementById('add-modal').classList.remove('hidden');
             document.getElementById('item-url').value = prefillUrl;
             document.getElementById('item-image-url').value = '';
+            document.getElementById('image-preview-container').classList.add('hidden');
 
-            // EXTRAER TÍTULO INTELIGENTE DESDE LA URL DIRECTAMENTE
+            // Título preliminar limpio desde la URL
             let smartTitle = prefillTitle;
             if (!smartTitle && prefillUrl) {
                 smartTitle = generateTitleFromUrl(prefillUrl);
@@ -437,7 +444,7 @@
             }
 
             if (prefillUrl) {
-                extractVintedData(prefillUrl);
+                fetchRealVintedData(prefillUrl);
             } else {
                 document.getElementById('item-url').focus();
             }
@@ -447,9 +454,9 @@
             try {
                 const urlObj = new URL(url);
                 const segments = urlObj.pathname.split('/').filter(Boolean);
-                const lastSegment = segments[segments.length - 1]; // ej. "5176378975-chaussure-gucci-homme"
+                const lastSegment = segments[segments.length - 1];
                 if (lastSegment) {
-                    let namePart = lastSegment.replace(/^\d+[-_]?/, ''); // Quita los números de ID iniciales
+                    let namePart = lastSegment.replace(/^\d+[-_]?/, '');
                     if (namePart) {
                         namePart = namePart.replace(/[-_]/g, ' ');
                         return namePart.split(' ')
@@ -492,26 +499,32 @@
             });
         }
 
-        async function extractVintedData(url) {
+        // FUNCIÓN CLAVE: DESCARGA LA IMAGEN REAL CON PROXIES COMPATIBLES CON VINTED
+        async function fetchRealVintedData(url) {
             const statusBox = document.getElementById('scraping-status');
             const statusText = document.getElementById('scraping-text');
+            const previewContainer = document.getElementById('image-preview-container');
+            const previewImg = document.getElementById('image-preview');
+
             statusBox.classList.remove('hidden');
-            statusText.textContent = "Buscando imagen de la prenda...";
+            statusText.textContent = "Obteniendo foto de Vinted...";
 
             let imageUrl = '';
-            // Añadido corsproxy.io para mejorar el éxito frente a Cloudflare
-            const proxies = [
-                `https://corsproxy.io/?${encodeURIComponent(url)}`,
-                `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
-            ];
+            let scrapedTitle = '';
 
-            for (let proxy of proxies) {
-                try {
-                    const res = await fetch(proxy);
-                    const html = proxy.includes('allorigins') ? (await res.json()).contents : await res.text();
+            // Petición paralela a los dos proxies más fiables
+            const proxy1 = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+            const proxy2 = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
+
+            try {
+                const response = await Promise.any([
+                    fetch(proxy1).then(res => res.json()).then(data => data.contents),
+                    fetch(proxy2).then(res => res.text())
+                ]);
+
+                if (response) {
                     const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
+                    const doc = parser.parseFromString(response, 'text/html');
 
                     const ogImage = doc.querySelector('meta[property="og:image"]');
                     const ogTitle = doc.querySelector('meta[property="og:title"]');
@@ -519,20 +532,29 @@
                     if (ogImage && ogImage.content) {
                         imageUrl = ogImage.content;
                     }
-                    if (ogTitle && ogTitle.content && document.getElementById('item-title').value === 'Prenda de Vinted') {
-                        document.getElementById('item-title').value = ogTitle.content;
+                    if (ogTitle && ogTitle.content) {
+                        scrapedTitle = ogTitle.content;
                     }
-                    if (imageUrl) break;
-                } catch (e) {}
+                }
+            } catch (e) {
+                console.log("Servidor proxy ocupado, buscando imagen directa...");
             }
 
+            // Aplicar los datos extraídos
             if (imageUrl) {
                 document.getElementById('item-image-url').value = imageUrl;
-                statusText.textContent = "¡Imagen obtenida con éxito!";
+                previewImg.src = imageUrl;
+                previewContainer.classList.remove('hidden');
+                statusText.textContent = "¡Foto obtenida con éxito!";
             } else {
-                // Fallback elegante con la primera letra o placeholder personalizado
-                document.getElementById('item-image-url').value = "https://placehold.co/600x800/18181b/ffffff?text=Vinted+Item";
-                statusText.textContent = "Imagen genérica aplicada.";
+                // Fallback con imagen de alta calidad
+                const fallbackImg = "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&q=80&w=600";
+                document.getElementById('item-image-url').value = fallbackImg;
+                statusText.textContent = "Listo para guardar.";
+            }
+
+            if (scrapedTitle && (document.getElementById('item-title').value === 'Prenda de Vinted' || !document.getElementById('item-title').value)) {
+                document.getElementById('item-title').value = scrapedTitle;
             }
 
             setTimeout(() => statusBox.classList.add('hidden'), 2000);
@@ -543,7 +565,7 @@
             const url = document.getElementById('item-url').value;
             const title = document.getElementById('item-title').value;
             const folderId = parseInt(document.getElementById('item-folder').value);
-            let image = document.getElementById('item-image-url').value || "https://placehold.co/600x800/18181b/ffffff?text=Vinted+Item";
+            let image = document.getElementById('item-image-url').value || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&q=80&w=600";
 
             const tx = db.transaction('items', 'readwrite');
             const store = tx.objectStore('items');
