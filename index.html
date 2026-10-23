@@ -26,8 +26,11 @@
             </h1>
         </div>
         <div class="flex items-center space-x-2">
-            <button onclick="openNewFolderModal()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 border border-zinc-700/50">
+            <button id="new-folder-btn" onclick="openNewFolderModal()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 border border-zinc-700/50">
                 <i class="fa-solid fa-folder-plus"></i> <span class="hidden sm:inline">Nueva Carpeta</span>
+            </button>
+            <button id="new-outfit-btn" onclick="openNewOutfitModal()" class="hidden flex bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-2 rounded-xl text-sm font-medium transition items-center gap-2 border border-zinc-700/50">
+                <i class="fa-solid fa-layer-group"></i> <span class="hidden sm:inline">Nuevo Outfit</span>
             </button>
             <button onclick="openAddModal()" class="bg-white text-zinc-950 hover:bg-zinc-200 px-3.5 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 shadow-sm">
                 <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Añadir Prenda</span>
@@ -37,7 +40,15 @@
 
     <!-- CONTENIDO PRINCIPAL -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
-        
+        <div id="collection-tabs" class="flex gap-2 mb-6 p-1 bg-zinc-900 border border-zinc-800 rounded-2xl w-fit" role="tablist" aria-label="Secciones del armario">
+            <button id="folders-tab" type="button" onclick="showMainSection('folders')" class="px-4 py-2 rounded-xl text-sm font-semibold transition" role="tab" aria-selected="true">
+                <i class="fa-solid fa-folder mr-2"></i>Carpetas
+            </button>
+            <button id="outfits-tab" type="button" onclick="showMainSection('outfits')" class="px-4 py-2 rounded-xl text-sm font-semibold transition" role="tab" aria-selected="false">
+                <i class="fa-solid fa-layer-group mr-2"></i>Outfits
+            </button>
+        </div>
+
         <!-- VISTA 1: TARJETAS DE CARPETAS (HOME) -->
         <section id="folders-view" class="space-y-6">
             <div class="flex items-center justify-between">
@@ -48,6 +59,18 @@
             <div id="folders-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 <!-- Se inyecta dinámicamente -->
             </div>
+        </section>
+
+        <!-- VISTA OUTFITS: COLECCIONES DE PRENDAS REFERENCIADAS -->
+        <section id="outfits-view" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold tracking-tight">Outfits</h2>
+                    <p class="text-sm text-zinc-400 mt-1">Combina prendas guardadas sin duplicarlas.</p>
+                </div>
+                <span id="outfits-count" class="text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-full">0 outfits</span>
+            </div>
+            <div id="outfits-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"></div>
         </section>
 
         <!-- VISTA 2: DETALLE DE CARPETA (PRENDAS) -->
@@ -72,11 +95,34 @@
             </div>
         </section>
 
+        <!-- VISTA DETALLE DE OUTFIT -->
+        <section id="outfit-detail-view" class="hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-zinc-900/50 border border-zinc-800/60 p-4 rounded-2xl">
+                <div>
+                    <h2 id="current-outfit-name" class="text-xl font-bold tracking-tight text-white">Nombre del outfit</h2>
+                    <p id="current-outfit-count" class="text-xs text-zinc-400 mt-0.5">0 prendas</p>
+                    <p class="text-xs text-zinc-500 mt-1">Quitar una prenda de aquí no la elimina de tus carpetas.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openAddItemsToOutfitModal()" class="bg-white hover:bg-zinc-200 text-zinc-950 px-3 py-2.5 rounded-xl transition text-sm font-semibold flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Añadir prendas
+                    </button>
+                    <button onclick="openEditOutfitModal(currentOutfitId)" class="text-zinc-200 hover:text-white hover:bg-zinc-800 border border-zinc-700/70 px-3 py-2.5 rounded-xl transition text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-pen"></i> Editar
+                    </button>
+                    <button onclick="deleteCurrentOutfit()" class="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2.5 rounded-xl transition text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-trash-can"></i> <span class="hidden sm:inline">Eliminar outfit</span>
+                    </button>
+                </div>
+            </div>
+            <div id="outfit-items-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"></div>
+        </section>
+
     </main>
 
     <!-- MODAL: AÑADIR PRENDA NUEVA -->
     <div id="add-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-bold tracking-tight">Añadir Prenda</h3>
                 <button onclick="closeAddModal()" class="text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-zinc-800 transition">
@@ -113,6 +159,16 @@
                     <select id="item-folder" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
                         <!-- Opciones dinámicas -->
                     </select>
+                </div>
+
+                <div class="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-3 space-y-2">
+                    <div>
+                        <p class="text-xs font-medium text-zinc-300">Añadir también a outfits (opcional)</p>
+                        <p class="text-xs text-zinc-500 mt-1">La prenda se guardará en una carpeta como siempre. Aquí solo eliges en qué conjuntos quieres reutilizarla.</p>
+                    </div>
+                    <div id="item-outfits-options" class="max-h-32 overflow-y-auto space-y-2 text-sm">
+                        <p class="text-xs text-zinc-500">Cargando outfits...</p>
+                    </div>
                 </div>
 
                 <input type="hidden" id="item-image-url" value="">
@@ -187,6 +243,58 @@
         </div>
     </div>
 
+    <!-- MODAL: CREAR / EDITAR OUTFIT -->
+    <div id="outfit-editor-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between">
+                <h3 id="outfit-editor-title" class="text-lg font-bold tracking-tight">Nuevo outfit</h3>
+                <button type="button" onclick="closeOutfitEditorModal()" class="text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-zinc-800 transition" aria-label="Cerrar edición de outfit">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="handleSaveOutfit(event)" class="space-y-4">
+                <input type="hidden" id="edit-outfit-id" value="">
+                <div>
+                    <label for="edit-outfit-name" class="block text-xs font-medium text-zinc-400 mb-1.5">Nombre del outfit</label>
+                    <input type="text" id="edit-outfit-name" required maxlength="80" placeholder="Ej. Sábado casual, Sesión de fotos..."
+                        class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-xs font-medium text-zinc-400">Portada</label>
+                    <div id="outfit-cover-preview" class="w-full h-48 bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800 relative flex items-center justify-center"></div>
+                    <input type="file" id="edit-outfit-cover-file" accept="image/*" onchange="handleOutfitCoverSelection(event)"
+                        class="block w-full text-sm text-zinc-400 file:mr-3 file:rounded-xl file:border-0 file:bg-zinc-800 file:px-3 file:py-2 file:text-zinc-200 hover:file:bg-zinc-700">
+                    <p class="text-xs text-zinc-500">Si no eliges una foto, se crea automáticamente un collage con las prendas del outfit. La imagen personalizada se guarda en este navegador.</p>
+                    <button type="button" onclick="resetOutfitCoverToAutomatic()" class="text-xs text-zinc-300 hover:text-white underline underline-offset-4">Usar collage automático</button>
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeOutfitEditorModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium py-3 rounded-xl text-sm transition">Cancelar</button>
+                    <button type="submit" id="save-outfit-btn" class="flex-1 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold py-3 rounded-xl text-sm transition shadow-sm">Guardar outfit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: AÑADIR PRENDAS EXISTENTES A UN OUTFIT -->
+    <div id="add-items-to-outfit-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <h3 class="text-lg font-bold tracking-tight">Añadir prendas al outfit</h3>
+                    <p class="text-xs text-zinc-400 mt-1">Selecciona prendas de cualquiera de tus carpetas.</p>
+                </div>
+                <button type="button" onclick="closeAddItemsToOutfitModal()" class="text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-zinc-800 transition" aria-label="Cerrar selector de prendas">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div id="outfit-items-picker" class="space-y-2"></div>
+            <div class="pt-2 flex gap-3">
+                <button type="button" onclick="closeAddItemsToOutfitModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium py-3 rounded-xl text-sm transition">Cancelar</button>
+                <button type="button" onclick="handleAddSelectedItemsToOutfit()" class="flex-1 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold py-3 rounded-xl text-sm transition shadow-sm">Añadir seleccionadas</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: VISTA PREVIA Y EDICIÓN -->
     <div id="item-detail-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
         <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-6">
@@ -227,8 +335,11 @@
                 </div>
 
                 <div class="pt-3 flex items-center justify-between border-t border-zinc-800">
-                    <button type="button" onclick="deleteItemFromDetail()" class="text-red-400 hover:text-red-300 hover:bg-red-500/10 px-4 py-2.5 rounded-xl transition text-sm font-medium flex items-center gap-2">
+                    <button type="button" id="delete-item-btn" onclick="deleteItemFromDetail()" class="text-red-400 hover:text-red-300 hover:bg-red-500/10 px-4 py-2.5 rounded-xl transition text-sm font-medium flex items-center gap-2">
                         <i class="fa-solid fa-trash-can"></i> Eliminar Prenda
+                    </button>
+                    <button type="button" id="remove-from-outfit-btn" onclick="removeActiveItemFromOutfit()" class="hidden flex text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 px-4 py-2.5 rounded-xl transition text-sm font-medium items-center gap-2">
+                        <i class="fa-solid fa-link-slash"></i> Quitar del outfit
                     </button>
                     <div class="flex gap-2">
                         <button type="button" onclick="closeItemDetailModal()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-2.5 rounded-xl text-sm font-medium transition">Cancelar</button>
@@ -243,7 +354,14 @@
     <script>
         let db;
         let currentFolderId = null;
+        let currentOutfitId = null;
+        let currentMainSection = 'folders';
         let activeEditingItem = null;
+        let activeItemSourceOutfitId = null;
+        let activeEditingOutfit = null;
+        let selectedOutfitCover = null;
+        let outfitEditorPreviewItems = [];
+        let outfitCoverSelectionToken = 0;
         let activeEditingFolder = null;
         let selectedFolderCover = null;
         let automaticFolderCoverImage = null;
@@ -257,7 +375,7 @@
         const VINTED_METADATA_WORKER = 'https://vinted-image-worker.marcos2005murillo.workers.dev';
 
         function initAppDatabase() {
-            const request = indexedDB.open('VintedArmarioAppDB_v25', 1);
+            const request = indexedDB.open('VintedArmarioAppDB_v25', 2);
 
             request.onerror = (e) => console.error("Error DB:", e);
 
@@ -269,6 +387,11 @@
                 if (!dbRef.objectStoreNames.contains('items')) {
                     const itemStore = dbRef.createObjectStore('items', { keyPath: 'id', autoIncrement: true });
                     itemStore.createIndex('folderId', 'folderId', { unique: false });
+                }
+                // Nueva tienda independiente: los outfits guardan IDs de prendas existentes.
+                // Actualizar la versión añade esta tienda sin borrar carpetas ni prendas.
+                if (!dbRef.objectStoreNames.contains('outfits')) {
+                    dbRef.createObjectStore('outfits', { keyPath: 'id', autoIncrement: true });
                 }
             };
 
@@ -297,6 +420,8 @@
         }
 
         function checkUrlParamsAndLoad() {
+            setCollectionTabState('folders');
+            updateHeaderActions('folders', false);
             loadFoldersView();
 
             const params = new URLSearchParams(window.location.search);
@@ -317,22 +442,72 @@
             return match ? match[0] : text;
         }
 
-        function goHome() {
+        function setCollectionTabState(section) {
+            const foldersTab = document.getElementById('folders-tab');
+            const outfitsTab = document.getElementById('outfits-tab');
+            const active = 'px-4 py-2 rounded-xl text-sm font-semibold transition bg-white text-zinc-950 shadow-sm';
+            const inactive = 'px-4 py-2 rounded-xl text-sm font-semibold transition text-zinc-300 hover:bg-zinc-800';
+            foldersTab.className = section === 'folders' ? active : inactive;
+            outfitsTab.className = section === 'outfits' ? active : inactive;
+            foldersTab.setAttribute('aria-selected', section === 'folders' ? 'true' : 'false');
+            outfitsTab.setAttribute('aria-selected', section === 'outfits' ? 'true' : 'false');
+        }
+
+        function updateHeaderActions(section, isDetail = false) {
+            document.getElementById('new-folder-btn').classList.toggle('hidden', section !== 'folders' || isDetail);
+            document.getElementById('new-outfit-btn').classList.toggle('hidden', section !== 'outfits' || isDetail);
+        }
+
+        function showMainSection(section = 'folders') {
+            currentMainSection = section === 'outfits' ? 'outfits' : 'folders';
             currentFolderId = null;
+            currentOutfitId = null;
             document.getElementById('back-btn').classList.add('hidden');
             document.getElementById('app-title').innerHTML = `<i class="fa-solid fa-shirt text-zinc-400"></i> Mi Armario`;
-            document.getElementById('folders-view').classList.remove('hidden');
+            document.getElementById('collection-tabs').classList.remove('hidden');
+            document.getElementById('folders-view').classList.toggle('hidden', currentMainSection !== 'folders');
+            document.getElementById('outfits-view').classList.toggle('hidden', currentMainSection !== 'outfits');
             document.getElementById('folder-detail-view').classList.add('hidden');
-            loadFoldersView();
+            document.getElementById('outfit-detail-view').classList.add('hidden');
+            updateHeaderActions(currentMainSection, false);
+            setCollectionTabState(currentMainSection);
+            if (currentMainSection === 'folders') loadFoldersView();
+            else loadOutfitsView();
+        }
+
+        function goHome() {
+            // El botón de volver regresa a la sección que originó el detalle.
+            showMainSection(currentMainSection || 'folders');
         }
 
         function openFolder(folderId, folderName) {
-            currentFolderId = folderId;
+            currentMainSection = 'folders';
+            currentFolderId = Number(folderId);
+            currentOutfitId = null;
             document.getElementById('back-btn').classList.remove('hidden');
             document.getElementById('app-title').textContent = folderName;
+            document.getElementById('collection-tabs').classList.add('hidden');
             document.getElementById('folders-view').classList.add('hidden');
+            document.getElementById('outfits-view').classList.add('hidden');
+            document.getElementById('outfit-detail-view').classList.add('hidden');
             document.getElementById('folder-detail-view').classList.remove('hidden');
-            loadFolderItems(folderId, folderName);
+            updateHeaderActions('folders', true);
+            loadFolderItems(currentFolderId, folderName);
+        }
+
+        function openOutfit(outfitId, outfitName) {
+            currentMainSection = 'outfits';
+            currentFolderId = null;
+            currentOutfitId = Number(outfitId);
+            document.getElementById('back-btn').classList.remove('hidden');
+            document.getElementById('app-title').textContent = outfitName || 'Outfit';
+            document.getElementById('collection-tabs').classList.add('hidden');
+            document.getElementById('folders-view').classList.add('hidden');
+            document.getElementById('folder-detail-view').classList.add('hidden');
+            document.getElementById('outfits-view').classList.add('hidden');
+            document.getElementById('outfit-detail-view').classList.remove('hidden');
+            updateHeaderActions('outfits', true);
+            loadOutfitItems(currentOutfitId);
         }
 
         function loadFoldersView() {
@@ -379,7 +554,7 @@
                             <div class="relative overflow-hidden bg-zinc-950">${coverHTML}</div>
                             <div class="p-4 flex items-center justify-between bg-zinc-900">
                                 <div>
-                                    <h3 class="font-bold text-sm sm:text-base text-white tracking-tight">${folder.name}</h3>
+                                    <h3 class="font-bold text-sm sm:text-base text-white tracking-tight">${escapeHtml(folder.name || 'Carpeta')}</h3>
                                     <p class="text-xs text-zinc-400 mt-0.5">${items.length} ${items.length === 1 ? 'prenda' : 'prendas'}</p>
                                 </div>
                                 <div class="w-8 h-8 rounded-full bg-zinc-800/80 flex items-center justify-center text-zinc-400 group-hover:bg-white group-hover:text-zinc-950 transition">
@@ -427,7 +602,7 @@
                             <img src="${item.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="${item.title}">
                         </div>
                         <div class="p-4 bg-zinc-950 flex flex-col justify-between flex-1">
-                            <h4 class="font-medium text-xs sm:text-sm text-zinc-200 line-clamp-2 leading-snug">${item.title}</h4>
+                            <h4 class="font-medium text-xs sm:text-sm text-zinc-200 line-clamp-2 leading-snug">${escapeHtml(item.title || 'Prenda')}</h4>
                             <div class="mt-3 pt-3 border-t border-zinc-900 flex items-center justify-between text-xs text-zinc-500">
                                 <span>Ver detalles</span>
                                 <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-1 transition text-zinc-400"></i>
@@ -437,6 +612,447 @@
                     grid.appendChild(card);
                 });
             };
+        }
+
+        function isUsableOutfitCover(value) {
+            return typeof value === 'string' && /^data:image\/jpeg;base64,[a-z0-9+/]+=*$/i.test(value);
+        }
+
+        function getOutfitItems(outfit, allItems) {
+            const itemIds = Array.isArray(outfit && outfit.itemIds) ? outfit.itemIds : [];
+            const byId = new Map((allItems || []).map(item => [String(item.id), item]));
+            return itemIds.map(id => byId.get(String(id))).filter(Boolean);
+        }
+
+        function renderOutfitCoverMarkup(outfit, outfitItems, heightClass = 'h-44 sm:h-52') {
+            if (isUsableOutfitCover(outfit && outfit.coverImage)) {
+                return `<img src="${escapeHtml(outfit.coverImage)}" class="w-full h-full object-cover" alt="Portada de ${escapeHtml(outfit.name || 'outfit')}">`;
+            }
+            const items = Array.isArray(outfitItems) ? outfitItems.slice(0, 4) : [];
+            if (items.length === 0) {
+                const initial = escapeHtml(String(outfit && outfit.name || 'O').trim().charAt(0).toUpperCase() || 'O');
+                return `<div class="w-full h-full bg-zinc-800 flex flex-col items-center justify-center text-zinc-500 gap-2"><i class="fa-solid fa-layer-group text-3xl"></i><span class="font-bold text-3xl">${initial}</span><span class="text-[10px] uppercase tracking-widest">Outfit vacío</span></div>`;
+            }
+            if (items.length === 1) {
+                const item = items[0];
+                return `<img src="${escapeHtml(item.image || '')}" class="w-full h-full object-cover" alt="${escapeHtml(item.title || 'Prenda del outfit')}" loading="lazy">`;
+            }
+            const layoutClass = items.length === 2 ? 'grid-cols-2 grid-rows-1' : 'grid-cols-2 grid-rows-2';
+            const tiles = items.map(item => `<div class="min-w-0 min-h-0 overflow-hidden bg-zinc-800"><img src="${escapeHtml(item.image || '')}" class="w-full h-full object-cover" alt="${escapeHtml(item.title || 'Prenda del outfit')}" loading="lazy"></div>`);
+            while (tiles.length < (items.length === 2 ? 2 : 4)) {
+                tiles.push('<div class="bg-zinc-800/80 flex items-center justify-center text-zinc-600"><i class="fa-solid fa-shirt"></i></div>');
+            }
+            return `<div class="grid ${layoutClass} gap-[2px] w-full h-full bg-zinc-950">${tiles.join('')}</div>`;
+        }
+
+        function loadOutfitsView() {
+            if (!db) return;
+            const tx = db.transaction(['outfits', 'items'], 'readonly');
+            const outfitsReq = tx.objectStore('outfits').getAll();
+            const itemsReq = tx.objectStore('items').getAll();
+            let outfits = null;
+            let allItems = null;
+            const render = () => {
+                if (!outfits || !allItems) return;
+                const grid = document.getElementById('outfits-grid');
+                document.getElementById('outfits-count').textContent = `${outfits.length} ${outfits.length === 1 ? 'outfit' : 'outfits'}`;
+                grid.innerHTML = '';
+                if (outfits.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full text-center py-16 space-y-3"><div class="w-14 h-14 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center mx-auto text-zinc-500 text-xl"><i class="fa-solid fa-layer-group"></i></div><p class="text-zinc-300 text-sm font-medium">Todavía no tienes outfits.</p><p class="text-zinc-500 text-sm">Crea uno y combina prendas que ya hayas guardado en tus carpetas.</p><button type="button" onclick="openNewOutfitModal()" class="mt-2 bg-white text-zinc-950 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-zinc-200">Crear mi primer outfit</button></div>`;
+                    return;
+                }
+                outfits.sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+                outfits.forEach(outfit => {
+                    const outfitItems = getOutfitItems(outfit, allItems);
+                    const card = document.createElement('div');
+                    card.className = 'group bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col';
+                    const coverHTML = renderOutfitCoverMarkup(outfit, outfitItems);
+                    const name = escapeHtml(outfit.name || 'Outfit sin nombre');
+                    const countLabel = `${outfitItems.length} ${outfitItems.length === 1 ? 'prenda' : 'prendas'}`;
+                    card.innerHTML = `<div class="relative overflow-hidden bg-zinc-950 h-44 sm:h-52 group-hover:scale-[1.01] transition duration-300">${coverHTML}<span class="absolute bottom-2 right-2 bg-zinc-950/80 border border-zinc-700/80 rounded-lg px-2 py-1 text-[10px] text-zinc-200 backdrop-blur">${outfitItems.length} ${outfitItems.length === 1 ? 'prenda' : 'prendas'}</span></div><div class="p-4 flex items-center justify-between bg-zinc-900 gap-2"><div class="min-w-0"><h3 class="font-bold text-sm sm:text-base text-white tracking-tight truncate">${name}</h3><p class="text-xs text-zinc-400 mt-0.5">${countLabel}</p></div><div class="w-8 h-8 rounded-full shrink-0 bg-zinc-800/80 flex items-center justify-center text-zinc-400 group-hover:bg-white group-hover:text-zinc-950 transition"><i class="fa-solid fa-chevron-right text-xs"></i></div></div>`;
+                    card.onclick = () => openOutfit(outfit.id, outfit.name || 'Outfit');
+                    grid.appendChild(card);
+                });
+            };
+            outfitsReq.onsuccess = () => { outfits = outfitsReq.result || []; render(); };
+            itemsReq.onsuccess = () => { allItems = itemsReq.result || []; render(); };
+            outfitsReq.onerror = itemsReq.onerror = () => console.error('No se pudieron cargar los outfits.');
+        }
+
+        function loadOutfitItems(outfitId) {
+            if (!db || !outfitId) return;
+            const tx = db.transaction(['outfits', 'items'], 'readonly');
+            const outfitReq = tx.objectStore('outfits').get(Number(outfitId));
+            const itemsReq = tx.objectStore('items').getAll();
+            let outfit = null;
+            let allItems = null;
+            let outfitReady = false;
+            let itemsReady = false;
+            const render = () => {
+                if (!outfitReady || !itemsReady) return;
+                if (!outfit) {
+                    alert('No se ha encontrado este outfit. Vuelve a la sección de outfits.');
+                    showMainSection('outfits');
+                    return;
+                }
+                const items = getOutfitItems(outfit, allItems);
+                document.getElementById('current-outfit-name').textContent = outfit.name || 'Outfit';
+                document.getElementById('current-outfit-count').textContent = `${items.length} ${items.length === 1 ? 'prenda guardada' : 'prendas guardadas'}`;
+                const grid = document.getElementById('outfit-items-grid');
+                grid.innerHTML = '';
+                if (items.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full text-center py-16 space-y-3"><div class="w-12 h-12 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center mx-auto text-zinc-500 text-lg"><i class="fa-solid fa-shirt"></i></div><p class="text-zinc-400 text-sm">Este outfit todavía está vacío.</p><p class="text-zinc-500 text-xs">Añade prendas existentes desde tus carpetas, sin duplicarlas.</p><button type="button" onclick="openAddItemsToOutfitModal()" class="bg-white text-zinc-950 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-zinc-200">Añadir prendas</button></div>`;
+                    return;
+                }
+                items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'group bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 rounded-3xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col';
+                    card.innerHTML = `<button type="button" class="block w-full text-left" data-open-item="${Number(item.id)}"><div class="relative overflow-hidden bg-zinc-950 h-48 sm:h-60"><img src="${escapeHtml(item.image || '')}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="${escapeHtml(item.title || 'Prenda')}" loading="lazy"></div><div class="p-4 bg-zinc-950"><h4 class="font-medium text-xs sm:text-sm text-zinc-200 line-clamp-2 leading-snug">${escapeHtml(item.title || 'Prenda')}</h4></div></button><div class="px-4 pb-4 bg-zinc-950 flex items-center justify-between gap-2 border-t border-zinc-900 pt-3"><span class="text-xs text-zinc-500">En este outfit</span><button type="button" data-remove-item="${Number(item.id)}" class="text-xs text-amber-300 hover:text-amber-200 px-2 py-1.5 rounded-lg hover:bg-amber-500/10 transition"><i class="fa-solid fa-link-slash mr-1"></i>Quitar</button></div>`;
+                    card.querySelector('[data-open-item]').addEventListener('click', () => openItemDetailModal(item, Number(outfitId)));
+                    card.querySelector('[data-remove-item]').addEventListener('click', () => removeItemFromOutfit(Number(item.id), Number(outfitId)));
+                    grid.appendChild(card);
+                });
+            };
+            outfitReq.onsuccess = () => { outfit = outfitReq.result || null; outfitReady = true; render(); };
+            itemsReq.onsuccess = () => { allItems = itemsReq.result || []; itemsReady = true; render(); };
+            outfitReq.onerror = itemsReq.onerror = () => alert('No se pudieron cargar las prendas del outfit.');
+        }
+
+        function openNewOutfitModal() {
+            activeEditingOutfit = null;
+            selectedOutfitCover = null;
+            outfitEditorPreviewItems = [];
+            outfitCoverSelectionToken++;
+            document.getElementById('outfit-editor-title').textContent = 'Nuevo outfit';
+            document.getElementById('edit-outfit-id').value = '';
+            document.getElementById('edit-outfit-name').value = '';
+            document.getElementById('edit-outfit-cover-file').value = '';
+            document.getElementById('save-outfit-btn').disabled = false;
+            document.getElementById('save-outfit-btn').textContent = 'Crear outfit';
+            updateOutfitCoverPreview();
+            document.getElementById('outfit-editor-modal').classList.remove('hidden');
+            document.getElementById('edit-outfit-name').focus();
+        }
+
+        function openEditOutfitModal(outfitId) {
+            if (!db || !outfitId) return;
+            const tx = db.transaction(['outfits', 'items'], 'readonly');
+            const outfitReq = tx.objectStore('outfits').get(Number(outfitId));
+            const itemsReq = tx.objectStore('items').getAll();
+            let outfit = null;
+            let allItems = null;
+            let outfitReady = false;
+            let itemsReady = false;
+            const show = () => {
+                if (!outfitReady || !itemsReady) return;
+                if (!outfit) {
+                    alert('No se ha encontrado el outfit que quieres editar.');
+                    return;
+                }
+                activeEditingOutfit = outfit;
+                selectedOutfitCover = isUsableOutfitCover(outfit.coverImage) ? outfit.coverImage : null;
+                outfitEditorPreviewItems = getOutfitItems(outfit, allItems);
+                outfitCoverSelectionToken++;
+                document.getElementById('outfit-editor-title').textContent = 'Editar outfit';
+                document.getElementById('edit-outfit-id').value = outfit.id;
+                document.getElementById('edit-outfit-name').value = outfit.name || '';
+                document.getElementById('edit-outfit-cover-file').value = '';
+                document.getElementById('save-outfit-btn').disabled = false;
+                document.getElementById('save-outfit-btn').textContent = 'Guardar cambios';
+                updateOutfitCoverPreview();
+                document.getElementById('outfit-editor-modal').classList.remove('hidden');
+                document.getElementById('edit-outfit-name').focus();
+            };
+            outfitReq.onsuccess = () => { outfit = outfitReq.result || null; outfitReady = true; show(); };
+            itemsReq.onsuccess = () => { allItems = itemsReq.result || []; itemsReady = true; show(); };
+            outfitReq.onerror = itemsReq.onerror = () => alert('No se pudieron cargar los datos del outfit.');
+        }
+
+        function closeOutfitEditorModal() {
+            outfitCoverSelectionToken++;
+            document.getElementById('outfit-editor-modal').classList.add('hidden');
+            document.getElementById('edit-outfit-cover-file').value = '';
+            document.getElementById('save-outfit-btn').disabled = false;
+            document.getElementById('save-outfit-btn').textContent = 'Guardar outfit';
+            selectedOutfitCover = null;
+            outfitEditorPreviewItems = [];
+            activeEditingOutfit = null;
+        }
+
+        function updateOutfitCoverPreview() {
+            const preview = document.getElementById('outfit-cover-preview');
+            const name = document.getElementById('edit-outfit-name').value.trim() || 'Outfit';
+            preview.innerHTML = renderOutfitCoverMarkup({ name, coverImage: selectedOutfitCover }, outfitEditorPreviewItems, 'h-48');
+        }
+
+        function resetOutfitCoverToAutomatic() {
+            outfitCoverSelectionToken++;
+            selectedOutfitCover = null;
+            document.getElementById('edit-outfit-cover-file').value = '';
+            const button = document.getElementById('save-outfit-btn');
+            button.disabled = false;
+            button.textContent = activeEditingOutfit ? 'Guardar cambios' : 'Crear outfit';
+            updateOutfitCoverPreview();
+        }
+
+        async function handleOutfitCoverSelection(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                alert('Selecciona un archivo de imagen válido.');
+                event.target.value = '';
+                return;
+            }
+            const token = ++outfitCoverSelectionToken;
+            const button = document.getElementById('save-outfit-btn');
+            button.disabled = true;
+            button.textContent = 'Procesando imagen...';
+            try {
+                const dataUrl = await compressFolderCover(file);
+                if (token !== outfitCoverSelectionToken) return;
+                selectedOutfitCover = dataUrl;
+                updateOutfitCoverPreview();
+            } catch (error) {
+                if (token === outfitCoverSelectionToken) {
+                    alert('No se pudo procesar esta imagen. Prueba con otra fotografía.');
+                    console.error('Error al preparar portada del outfit:', error);
+                }
+            } finally {
+                if (token === outfitCoverSelectionToken) {
+                    button.disabled = false;
+                    button.textContent = activeEditingOutfit ? 'Guardar cambios' : 'Crear outfit';
+                }
+                event.target.value = '';
+            }
+        }
+
+        function handleSaveOutfit(event) {
+            event.preventDefault();
+            if (!db || document.getElementById('save-outfit-btn').disabled) return;
+            const name = document.getElementById('edit-outfit-name').value.trim();
+            const idValue = document.getElementById('edit-outfit-id').value;
+            if (!name) {
+                alert('Escribe un nombre para el outfit.');
+                document.getElementById('edit-outfit-name').focus();
+                return;
+            }
+            const tx = db.transaction('outfits', 'readwrite');
+            const store = tx.objectStore('outfits');
+            if (idValue) {
+                const id = Number(idValue);
+                const getReq = store.get(id);
+                getReq.onsuccess = () => {
+                    const existing = getReq.result;
+                    if (!existing) {
+                        tx.abort();
+                        alert('No se ha encontrado el outfit que querías editar.');
+                        return;
+                    }
+                    store.put({ ...existing, name, coverImage: selectedOutfitCover || null });
+                };
+            } else {
+                store.add({ name, itemIds: [], coverImage: selectedOutfitCover || null, createdAt: Date.now() });
+            }
+            tx.oncomplete = () => {
+                const isEditingCurrent = idValue && currentOutfitId === Number(idValue);
+                const savedName = name;
+                closeOutfitEditorModal();
+                if (isEditingCurrent) {
+                    document.getElementById('app-title').textContent = savedName;
+                    loadOutfitItems(Number(idValue));
+                }
+                loadOutfitsView();
+            };
+            tx.onerror = () => alert('No se pudieron guardar los cambios del outfit. Las prendas no se han modificado.');
+        }
+
+        function deleteCurrentOutfit() {
+            if (!currentOutfitId) return;
+            if (!confirm('¿Eliminar este outfit? Solo se eliminará el conjunto; las prendas seguirán guardadas en sus carpetas y en otros outfits.')) return;
+            const id = Number(currentOutfitId);
+            const tx = db.transaction('outfits', 'readwrite');
+            tx.objectStore('outfits').delete(id);
+            tx.oncomplete = () => showMainSection('outfits');
+            tx.onerror = () => alert('No se pudo eliminar el outfit. Las prendas se mantienen intactas.');
+        }
+
+        function addItemIdsToOutfits(itemIds, outfitIds) {
+            const normalizedItemIds = [...new Set((itemIds || []).map(Number).filter(Number.isFinite))];
+            const normalizedOutfitIds = [...new Set((outfitIds || []).map(Number).filter(Number.isFinite))];
+            if (!normalizedItemIds.length || !normalizedOutfitIds.length) return Promise.resolve();
+            return new Promise((resolve, reject) => {
+                if (!db) { reject(new Error('Base de datos no disponible')); return; }
+                let tx;
+                try { tx = db.transaction('outfits', 'readwrite'); }
+                catch (error) { reject(error); return; }
+                const store = tx.objectStore('outfits');
+                const req = store.getAll();
+                req.onsuccess = () => {
+                    const targets = new Set(normalizedOutfitIds.map(String));
+                    (req.result || []).forEach(outfit => {
+                        if (!targets.has(String(outfit.id))) return;
+                        const existing = Array.isArray(outfit.itemIds) ? outfit.itemIds.map(Number) : [];
+                        outfit.itemIds = [...new Set([...existing, ...normalizedItemIds])];
+                        store.put(outfit);
+                    });
+                };
+                req.onerror = () => reject(req.error || new Error('No se pudieron leer los outfits'));
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error || new Error('No se pudieron actualizar los outfits'));
+                tx.onabort = () => reject(tx.error || new Error('Se canceló la actualización de outfits'));
+            });
+        }
+
+        async function updateAddModalOutfitOptions(preselectedOutfitId = null) {
+            const container = document.getElementById('item-outfits-options');
+            if (!container) return;
+            if (!db) { container.innerHTML = '<p class="text-xs text-zinc-500">Almacenamiento no disponible.</p>'; return; }
+            try {
+                const outfits = await new Promise((resolve, reject) => {
+                    const tx = db.transaction('outfits', 'readonly');
+                    const req = tx.objectStore('outfits').getAll();
+                    req.onsuccess = () => resolve(req.result || []);
+                    req.onerror = () => reject(req.error);
+                });
+                container.innerHTML = '';
+                if (!outfits.length) {
+                    container.innerHTML = '<p class="text-xs text-zinc-500">Todavía no hay outfits. Puedes crear uno desde la sección Outfits.</p>';
+                    return;
+                }
+                outfits.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es'));
+                outfits.forEach(outfit => {
+                    const label = document.createElement('label');
+                    label.className = 'flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-zinc-800/70 cursor-pointer';
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = 'new-item-outfit';
+                    checkbox.value = String(outfit.id);
+                    checkbox.className = 'rounded border-zinc-700 bg-zinc-950 text-white focus:ring-zinc-500';
+                    checkbox.checked = preselectedOutfitId !== null && String(outfit.id) === String(preselectedOutfitId);
+                    const icon = document.createElement('span');
+                    icon.className = 'text-zinc-400';
+                    icon.innerHTML = '<i class="fa-solid fa-layer-group"></i>';
+                    const textNode = document.createElement('span');
+                    textNode.className = 'text-sm text-zinc-200';
+                    textNode.textContent = outfit.name || 'Outfit sin nombre';
+                    label.append(checkbox, icon, textNode);
+                    container.appendChild(label);
+                });
+            } catch (error) {
+                console.error('No se pudieron cargar los outfits en el formulario de prenda:', error);
+                container.innerHTML = '<p class="text-xs text-amber-300">No se pudieron cargar los outfits. Puedes guardar la prenda en su carpeta y añadirla después.</p>';
+            }
+        }
+
+        function openAddItemsToOutfitModal() {
+            if (!currentOutfitId || !db) return;
+            const modal = document.getElementById('add-items-to-outfit-modal');
+            const picker = document.getElementById('outfit-items-picker');
+            picker.innerHTML = '<p class="text-sm text-zinc-400 py-4 text-center">Cargando prendas...</p>';
+            modal.classList.remove('hidden');
+            const tx = db.transaction(['items', 'outfits', 'folders'], 'readonly');
+            const itemsReq = tx.objectStore('items').getAll();
+            const outfitReq = tx.objectStore('outfits').get(Number(currentOutfitId));
+            const foldersReq = tx.objectStore('folders').getAll();
+            let items = null, outfit = null, folders = null;
+            let itemReady = false, outfitReady = false, folderReady = false;
+            const render = () => {
+                if (!itemReady || !outfitReady || !folderReady) return;
+                if (!outfit) { picker.innerHTML = '<p class="text-sm text-zinc-400">No se ha encontrado este outfit.</p>'; return; }
+                const presentIds = new Set((Array.isArray(outfit.itemIds) ? outfit.itemIds : []).map(String));
+                const folderNames = new Map((folders || []).map(folder => [String(folder.id), folder.name || 'Carpeta']));
+                items.sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+                picker.innerHTML = '';
+                if (!items.length) {
+                    picker.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-shirt text-3xl text-zinc-600"></i><p class="text-sm text-zinc-300 mt-3">Todavía no hay prendas guardadas.</p><p class="text-xs text-zinc-500 mt-1">Añade primero anuncios desde Vinted.</p></div>';
+                    return;
+                }
+                items.forEach(item => {
+                    const alreadyAdded = presentIds.has(String(item.id));
+                    const label = document.createElement('label');
+                    label.className = `flex items-center gap-3 p-2 rounded-xl border ${alreadyAdded ? 'border-zinc-800 bg-zinc-950/40 opacity-60 cursor-not-allowed' : 'border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800/40 cursor-pointer'} transition`;
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = 'outfit-existing-item';
+                    checkbox.value = String(item.id);
+                    checkbox.disabled = alreadyAdded;
+                    checkbox.className = 'rounded border-zinc-700 bg-zinc-950 text-white focus:ring-zinc-500 shrink-0';
+                    const image = document.createElement('img');
+                    image.src = item.image || '';
+                    image.alt = '';
+                    image.loading = 'lazy';
+                    image.className = 'w-14 h-14 rounded-lg object-cover bg-zinc-800 shrink-0';
+                    const textWrap = document.createElement('div');
+                    textWrap.className = 'min-w-0 flex-1';
+                    const title = document.createElement('p');
+                    title.className = 'text-sm text-zinc-100 truncate';
+                    title.textContent = item.title || 'Prenda sin nombre';
+                    const subtitle = document.createElement('p');
+                    subtitle.className = 'text-xs text-zinc-500 mt-1';
+                    subtitle.textContent = folderNames.get(String(item.folderId)) || 'Sin carpeta';
+                    textWrap.append(title, subtitle);
+                    const status = document.createElement('span');
+                    status.className = 'text-[10px] text-zinc-500 shrink-0';
+                    status.textContent = alreadyAdded ? 'Ya añadida' : '';
+                    label.append(checkbox, image, textWrap, status);
+                    picker.appendChild(label);
+                });
+            };
+            itemsReq.onsuccess = () => { items = itemsReq.result || []; itemReady = true; render(); };
+            outfitReq.onsuccess = () => { outfit = outfitReq.result || null; outfitReady = true; render(); };
+            foldersReq.onsuccess = () => { folders = foldersReq.result || []; folderReady = true; render(); };
+            itemsReq.onerror = outfitReq.onerror = foldersReq.onerror = () => { picker.innerHTML = '<p class="text-sm text-amber-300">No se pudieron cargar las prendas.</p>'; };
+        }
+
+        function closeAddItemsToOutfitModal() {
+            document.getElementById('add-items-to-outfit-modal').classList.add('hidden');
+            document.getElementById('outfit-items-picker').innerHTML = '';
+        }
+
+        async function handleAddSelectedItemsToOutfit() {
+            if (!currentOutfitId) return;
+            const selected = [...document.querySelectorAll('input[name="outfit-existing-item"]:checked')].map(input => Number(input.value));
+            if (!selected.length) {
+                alert('Selecciona al menos una prenda nueva para añadir. Las que ya están en el outfit aparecen marcadas como añadidas.');
+                return;
+            }
+            const id = Number(currentOutfitId);
+            try {
+                await addItemIdsToOutfits(selected, [id]);
+                closeAddItemsToOutfitModal();
+                loadOutfitItems(id);
+                loadOutfitsView();
+            } catch (error) {
+                console.error(error);
+                alert('No se pudieron añadir las prendas al outfit. No se ha eliminado ninguna prenda del armario.');
+            }
+        }
+
+        function removeItemFromOutfit(itemId, outfitId, closeDetailOnSuccess = false) {
+            const targetOutfitId = Number(outfitId || currentOutfitId);
+            const targetItemId = Number(itemId);
+            if (!targetOutfitId || !targetItemId || !db) return;
+            if (!confirm('¿Quitar esta prenda de este outfit? Seguirá guardada en su carpeta y en los demás outfits.')) return;
+            const tx = db.transaction('outfits', 'readwrite');
+            const store = tx.objectStore('outfits');
+            const req = store.get(targetOutfitId);
+            req.onsuccess = () => {
+                const outfit = req.result;
+                if (!outfit) return;
+                outfit.itemIds = (Array.isArray(outfit.itemIds) ? outfit.itemIds : []).filter(id => String(id) !== String(targetItemId));
+                store.put(outfit);
+            };
+            tx.oncomplete = () => {
+                if (closeDetailOnSuccess) closeItemDetailModal();
+                if (currentOutfitId === targetOutfitId) loadOutfitItems(targetOutfitId);
+                loadOutfitsView();
+            };
+            tx.onerror = () => alert('No se pudo quitar la prenda del outfit. La prenda sigue guardada en el armario.');
+        }
+
+        function removeActiveItemFromOutfit() {
+            if (!activeEditingItem || !activeItemSourceOutfitId) return;
+            removeItemFromOutfit(activeEditingItem.id, activeItemSourceOutfitId, true);
         }
 
         function openNewFolderModal() {
@@ -664,22 +1280,32 @@
 
         function deleteCurrentFolder() {
             if (!currentFolderId) return;
-            if (!confirm("¿Seguro que quieres eliminar esta carpeta y sus prendas?")) return;
+            if (!confirm("¿Seguro que quieres eliminar esta carpeta y sus prendas? Las prendas también se quitarán de los outfits, pero las demás prendas de esos outfits se conservarán.")) return;
 
-            const tx = db.transaction(['folders', 'items'], 'readwrite');
+            const folderId = Number(currentFolderId);
+            const tx = db.transaction(['folders', 'items', 'outfits'], 'readwrite');
             const folderStore = tx.objectStore('folders');
             const itemStore = tx.objectStore('items');
-            const index = itemStore.index('folderId');
-
-            const itemReq = index.getAllKeys(currentFolderId);
-            itemReq.onsuccess = () => {
-                itemReq.result.forEach(itemId => itemStore.delete(itemId));
-                folderStore.delete(currentFolderId);
-
-                tx.oncomplete = () => {
-                    goHome();
-                };
+            const outfitStore = tx.objectStore('outfits');
+            const itemReq = itemStore.index('folderId').getAllKeys(folderId);
+            const outfitsReq = outfitStore.getAll();
+            let deletedItemIds = null;
+            let outfits = null;
+            const applyChanges = () => {
+                if (deletedItemIds === null || outfits === null) return;
+                const deleted = new Set(deletedItemIds.map(String));
+                deletedItemIds.forEach(itemId => itemStore.delete(itemId));
+                outfits.forEach(outfit => {
+                    const oldIds = Array.isArray(outfit.itemIds) ? outfit.itemIds : [];
+                    const newIds = oldIds.filter(itemId => !deleted.has(String(itemId)));
+                    if (newIds.length !== oldIds.length) outfitStore.put({ ...outfit, itemIds: newIds });
+                });
+                folderStore.delete(folderId);
             };
+            itemReq.onsuccess = () => { deletedItemIds = itemReq.result || []; applyChanges(); };
+            outfitsReq.onsuccess = () => { outfits = outfitsReq.result || []; applyChanges(); };
+            tx.oncomplete = () => goHome();
+            tx.onerror = () => alert('No se pudo eliminar la carpeta. La operación se ha cancelado y no se han cambiado los outfits.');
         }
 
         async function openAddModal(prefillUrl = '', prefillTitle = '') {
@@ -698,6 +1324,7 @@
 
             await updateFolderSelects();
             if (currentFolderId) document.getElementById('item-folder').value = currentFolderId;
+            await updateAddModalOutfitOptions(currentOutfitId);
 
             if (prefillUrl) {
                 fetchRealVintedData(prefillUrl);
@@ -1058,6 +1685,7 @@
             const title = document.getElementById('item-title').value.trim();
             const folderId = parseInt(document.getElementById('item-folder').value, 10);
             const image = document.getElementById('item-image-url').value;
+            const selectedOutfitIds = [...document.querySelectorAll('input[name="new-item-outfit"]:checked')].map(input => Number(input.value));
 
             if (!isVintedListingUrl(url) || !isAppImageUrl(image)) {
                 alert('No se puede guardar todavía: la aplicación necesita obtener y verificar automáticamente la foto real de Vinted.');
@@ -1072,12 +1700,20 @@
             const tx = db.transaction('items', 'readwrite');
             const store = tx.objectStore('items');
             const req = store.add({ folderId, title, url, image, createdAt: Date.now() });
-
-            req.onsuccess = () => {
+            let newItemId = null;
+            req.onsuccess = () => { newItemId = req.result; };
+            req.onerror = () => alert('No se ha podido guardar la prenda. Comprueba el almacenamiento del navegador.');
+            tx.oncomplete = async () => {
+                if (newItemId === null) return;
+                try {
+                    if (selectedOutfitIds.length) await addItemIdsToOutfits([newItemId], selectedOutfitIds);
+                } catch (error) {
+                    console.error('La prenda se guardó, pero no se pudieron actualizar sus outfits:', error);
+                    alert('La prenda se ha guardado en su carpeta, pero no se pudo vincular a todos los outfits seleccionados. Puedes añadirla después desde la sección Outfits.');
+                }
                 closeAddModal();
                 goHome();
             };
-            req.onerror = () => alert('No se ha podido guardar la prenda. Comprueba el almacenamiento del navegador.');
         }
 
         // También intenta la extracción automática si el enlace se pega/escribe manualmente.
@@ -1098,59 +1734,80 @@
             urlInputDebounce = setTimeout(() => fetchRealVintedData(value), 800);
         });
 
-        async function openItemDetailModal(item) {
+        async function openItemDetailModal(item, sourceOutfitId = null) {
             activeEditingItem = item;
+            activeItemSourceOutfitId = sourceOutfitId ? Number(sourceOutfitId) : null;
             document.getElementById('detail-image').src = item.image;
             document.getElementById('detail-vinted-link').href = item.url;
             document.getElementById('edit-item-id').value = item.id;
             document.getElementById('edit-item-title').value = item.title;
             document.getElementById('edit-item-url').value = item.url;
+            document.getElementById('delete-item-btn').classList.toggle('hidden', Boolean(activeItemSourceOutfitId));
+            document.getElementById('remove-from-outfit-btn').classList.toggle('hidden', !activeItemSourceOutfitId);
 
             await updateFolderSelects();
             document.getElementById('edit-item-folder').value = item.folderId;
-
             document.getElementById('item-detail-modal').classList.remove('hidden');
         }
 
         function closeItemDetailModal() {
             document.getElementById('item-detail-modal').classList.add('hidden');
             activeEditingItem = null;
+            activeItemSourceOutfitId = null;
+            document.getElementById('delete-item-btn').classList.remove('hidden');
+            document.getElementById('remove-from-outfit-btn').classList.add('hidden');
         }
 
         function handleSaveItemEdit(e) {
             e.preventDefault();
             if (!activeEditingItem) return;
 
-            const updatedTitle = document.getElementById('edit-item-title').value;
-            const updatedUrl = document.getElementById('edit-item-url').value;
-            const updatedFolderId = parseInt(document.getElementById('edit-item-folder').value);
+            const sourceOutfitId = activeItemSourceOutfitId;
+            const updatedTitle = document.getElementById('edit-item-title').value.trim();
+            const updatedUrl = document.getElementById('edit-item-url').value.trim();
+            const updatedFolderId = parseInt(document.getElementById('edit-item-folder').value, 10);
+            if (!Number.isFinite(updatedFolderId)) {
+                alert('Selecciona una carpeta válida.');
+                return;
+            }
 
             const tx = db.transaction('items', 'readwrite');
             const store = tx.objectStore('items');
-
-            const updatedItem = {
-                ...activeEditingItem,
-                title: updatedTitle,
-                url: updatedUrl,
-                folderId: updatedFolderId
-            };
-
-            store.put(updatedItem).onsuccess = () => {
+            const updatedItem = { ...activeEditingItem, title: updatedTitle, url: updatedUrl, folderId: updatedFolderId };
+            store.put(updatedItem);
+            tx.oncomplete = () => {
                 closeItemDetailModal();
-                goHome();
+                if (sourceOutfitId) {
+                    loadOutfitItems(sourceOutfitId);
+                    loadOutfitsView();
+                } else {
+                    goHome();
+                }
             };
+            tx.onerror = () => alert('No se pudieron guardar los cambios de la prenda.');
         }
 
         function deleteItemFromDetail() {
-            if (!activeEditingItem) return;
-            if (!confirm("¿Seguro que quieres eliminar esta prenda?")) return;
+            if (!activeEditingItem || activeItemSourceOutfitId) return;
+            if (!confirm('¿Eliminar esta prenda de tu armario? También desaparecerá de los outfits en los que esté incluida.')) return;
 
-            const tx = db.transaction('items', 'readwrite');
-            const store = tx.objectStore('items');
-            store.delete(activeEditingItem.id).onsuccess = () => {
+            const itemId = Number(activeEditingItem.id);
+            const tx = db.transaction(['items', 'outfits'], 'readwrite');
+            tx.objectStore('items').delete(itemId);
+            const outfitsStore = tx.objectStore('outfits');
+            const outfitsReq = outfitsStore.getAll();
+            outfitsReq.onsuccess = () => {
+                (outfitsReq.result || []).forEach(outfit => {
+                    const oldIds = Array.isArray(outfit.itemIds) ? outfit.itemIds : [];
+                    const newIds = oldIds.filter(id => String(id) !== String(itemId));
+                    if (newIds.length !== oldIds.length) outfitsStore.put({ ...outfit, itemIds: newIds });
+                });
+            };
+            tx.oncomplete = () => {
                 closeItemDetailModal();
                 goHome();
             };
+            tx.onerror = () => alert('No se pudo eliminar la prenda. No se han guardado cambios parciales.');
         }
 
         // Arrancar la base de datos de inmediato
