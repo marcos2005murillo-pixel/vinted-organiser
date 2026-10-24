@@ -10,41 +10,51 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        html { scroll-behavior: smooth; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        :focus-visible { outline: 2px solid #a1a1aa; outline-offset: 3px; }
+        button, input, select { -webkit-tap-highlight-color: transparent; }
+        @media (max-width: 639px) {
+            #collection-tabs { width: calc(100% + 1.5rem); margin-left: -.75rem; margin-right: -.75rem; border-radius: 0; border-left: 0; border-right: 0; }
+            .mobile-action-button { min-width: 40px; min-height: 40px; padding-left: .65rem; padding-right: .65rem; }
+        }
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col selection:bg-zinc-800 selection:text-white">
 
     <!-- CABECERA -->
-    <header class="sticky top-0 z-40 bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
+    <header class="sticky top-0 z-40 bg-zinc-900/95 backdrop-blur-md border-b border-zinc-800 px-3 sm:px-4 py-3 flex items-center justify-between gap-2 min-h-[64px]">
         <div class="flex items-center space-x-3">
-            <button id="back-btn" onclick="goHome()" class="hidden text-zinc-400 hover:text-white transition p-2 rounded-xl hover:bg-zinc-800">
+            <button id="back-btn" type="button" onclick="goHome()" aria-label="Volver a Carpetas" title="Volver a Carpetas" class="hidden shrink-0 text-zinc-400 hover:text-white transition p-2 rounded-xl hover:bg-zinc-800 min-w-[40px] min-h-[40px]">
                 <i class="fa-solid fa-arrow-left text-lg"></i>
             </button>
-            <h1 id="app-title" class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            <h1 id="app-title" class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2 min-w-0 truncate">
                 <i class="fa-solid fa-shirt text-zinc-400"></i> Mi Armario
             </h1>
         </div>
-        <div class="flex items-center space-x-2">
-            <button id="new-folder-btn" onclick="openNewFolderModal()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 border border-zinc-700/50">
+        <div id="header-actions" class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button id="new-folder-btn" type="button" onclick="openNewFolderModal()" aria-label="Nueva carpeta" title="Nueva carpeta" class="mobile-action-button bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-2.5 sm:px-3 py-2 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 border border-zinc-700/50">
                 <i class="fa-solid fa-folder-plus"></i> <span class="hidden sm:inline">Nueva Carpeta</span>
             </button>
-            <button id="new-outfit-btn" onclick="openNewOutfitModal()" class="hidden flex bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-2 rounded-xl text-sm font-medium transition items-center gap-2 border border-zinc-700/50">
+            <button id="new-outfit-btn" type="button" onclick="openNewOutfitModal()" aria-label="Nuevo outfit" title="Nuevo outfit" class="mobile-action-button hidden flex bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-2.5 sm:px-3 py-2 rounded-xl text-sm font-medium transition items-center justify-center gap-2 border border-zinc-700/50">
                 <i class="fa-solid fa-layer-group"></i> <span class="hidden sm:inline">Nuevo Outfit</span>
             </button>
-            <button onclick="openAddModal()" class="bg-white text-zinc-950 hover:bg-zinc-200 px-3.5 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 shadow-sm">
+            <button id="header-add-item-btn" type="button" onclick="openAddModal()" aria-label="Añadir prenda" title="Añadir prenda" class="mobile-action-button bg-white text-zinc-950 hover:bg-zinc-200 px-2.5 sm:px-3.5 py-2 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 shadow-sm">
                 <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Añadir Prenda</span>
+            </button>
+            <button id="backup-open-btn" type="button" onclick="openBackupModal()" aria-label="Copias de seguridad" title="Copias de seguridad" class="mobile-action-button bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-2.5 py-2 rounded-xl text-sm font-medium transition flex items-center justify-center border border-zinc-700/50">
+                <i class="fa-solid fa-box-archive"></i><span class="hidden sm:inline ml-2">Copias</span>
             </button>
         </div>
     </header>
 
     <!-- CONTENIDO PRINCIPAL -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
-        <div id="collection-tabs" class="flex gap-2 mb-6 p-1 bg-zinc-900 border border-zinc-800 rounded-2xl w-fit" role="tablist" aria-label="Secciones del armario">
-            <button id="folders-tab" type="button" onclick="showMainSection('folders')" class="px-4 py-2 rounded-xl text-sm font-semibold transition" role="tab" aria-selected="true">
+        <div id="collection-tabs" class="sticky top-[64px] sm:top-[68px] z-30 flex gap-2 mb-6 p-1 bg-zinc-950/95 sm:bg-zinc-900/95 backdrop-blur-md border border-zinc-800 rounded-2xl w-full sm:w-fit" role="tablist" aria-label="Secciones del armario">
+            <button id="folders-tab" type="button" onclick="showMainSection('folders')" class="flex-1 sm:flex-none justify-center min-h-[44px] px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition" role="tab" aria-selected="true" aria-controls="folders-view">
                 <i class="fa-solid fa-folder mr-2"></i>Carpetas
             </button>
-            <button id="outfits-tab" type="button" onclick="showMainSection('outfits')" class="px-4 py-2 rounded-xl text-sm font-semibold transition" role="tab" aria-selected="false">
+            <button id="outfits-tab" type="button" onclick="showMainSection('outfits')" class="flex-1 sm:flex-none justify-center min-h-[44px] px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition" role="tab" aria-selected="false" aria-controls="outfits-view">
                 <i class="fa-solid fa-layer-group mr-2"></i>Outfits
             </button>
         </div>
@@ -350,6 +360,46 @@
         </div>
     </div>
 
+    <!-- MODAL: COPIA DE SEGURIDAD Y RESTAURACIÓN -->
+    <div id="backup-modal" class="fixed inset-0 z-[70] bg-black/85 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="backup-modal-title">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 shadow-2xl space-y-5">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <h3 id="backup-modal-title" class="text-lg font-bold tracking-tight">Copia de seguridad</h3>
+                    <p class="text-sm text-zinc-400 mt-1">Guarda o recupera tus carpetas, prendas, outfits y portadas personalizadas.</p>
+                </div>
+                <button type="button" onclick="closeBackupModal()" class="text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-zinc-800 transition min-w-[40px] min-h-[40px]" aria-label="Cerrar copias de seguridad">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-3.5 space-y-2">
+                <div class="flex items-center gap-2 text-sm font-semibold text-zinc-100"><i class="fa-solid fa-shield-halved text-zinc-400"></i> Tus datos se guardan en este navegador</div>
+                <p class="text-xs leading-relaxed text-zinc-400">La aplicación no sincroniza automáticamente tus carpetas entre dispositivos. Descarga una copia JSON para conservar tus datos o trasladarlos a otro navegador.</p>
+            </div>
+            <div class="space-y-2">
+                <button type="button" id="backup-export-btn" onclick="exportBackup()" class="w-full min-h-[46px] bg-white hover:bg-zinc-200 text-zinc-950 font-semibold py-3 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-download"></i> Descargar copia de seguridad
+                </button>
+                <p class="text-xs text-zinc-500">Incluye prendas, enlaces, carpetas, outfits, sus relaciones y las portadas personalizadas.</p>
+            </div>
+            <div class="border-t border-zinc-800 pt-4 space-y-3">
+                <div>
+                    <h4 class="font-semibold text-sm">Restaurar una copia</h4>
+                    <p class="text-xs text-zinc-400 mt-1 leading-relaxed">Restaurar sustituye los datos actuales por los de la copia. Antes de hacerlo, la aplicación intentará descargar una copia de seguridad del estado actual como protección.</p>
+                </div>
+                <label for="backup-import-file" class="w-full min-h-[46px] cursor-pointer bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-semibold py-3 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 border border-zinc-700">
+                    <i class="fa-solid fa-file-arrow-up"></i> Seleccionar archivo de copia (.json)
+                </label>
+                <input id="backup-import-file" type="file" accept=".json,application/json" class="hidden" onchange="handleBackupFileSelection(event)">
+                <p class="text-xs text-amber-200/80"><i class="fa-solid fa-triangle-exclamation mr-1"></i> No cierres la página durante la restauración.</p>
+            </div>
+            <div id="backup-status" class="hidden rounded-xl border p-3 text-xs leading-relaxed" role="status" aria-live="polite"></div>
+            <div class="flex justify-end pt-1">
+                <button type="button" onclick="closeBackupModal()" class="min-h-[44px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-5 py-2.5 rounded-xl text-sm font-medium transition">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- SCRIPT CORREGIDO CON EXTRACCIÓN REAL DE FOTO -->
     <script>
         let db;
@@ -358,6 +408,7 @@
         let currentMainSection = 'folders';
         let activeEditingItem = null;
         let activeItemSourceOutfitId = null;
+        let activeItemSourceFolderId = null;
         let activeEditingOutfit = null;
         let selectedOutfitCover = null;
         let outfitEditorPreviewItems = [];
@@ -373,6 +424,258 @@
         // El Worker NO se puede incrustar aquí: debe ejecutarse en un servidor para consultar Vinted.
         // Después de desplegar vinted-image-worker.js, pega aquí la URL real que te asigne Cloudflare.
         const VINTED_METADATA_WORKER = 'https://vinted-image-worker.marcos2005murillo.workers.dev';
+        const BACKUP_FORMAT = 'mi-armario-digital-backup';
+        const BACKUP_FORMAT_VERSION = 1;
+        let backupRestoreInProgress = false;
+
+        function openBackupModal() {
+            const modal = document.getElementById('backup-modal');
+            modal.classList.remove('hidden');
+            setBackupStatus('', 'info');
+            document.getElementById('backup-import-file').value = '';
+            document.getElementById('backup-export-btn').focus();
+        }
+
+        function closeBackupModal() {
+            document.getElementById('backup-modal').classList.add('hidden');
+            document.getElementById('backup-import-file').value = '';
+        }
+
+        function setBackupStatus(message, type = 'info') {
+            const status = document.getElementById('backup-status');
+            status.textContent = message || '';
+            status.classList.toggle('hidden', !message);
+            status.className = 'rounded-xl border p-3 text-xs leading-relaxed';
+            if (!message) status.classList.add('hidden');
+            else if (type === 'error') status.classList.add('border-red-500/40', 'bg-red-500/10', 'text-red-200');
+            else if (type === 'success') status.classList.add('border-emerald-500/40', 'bg-emerald-500/10', 'text-emerald-200');
+            else status.classList.add('border-zinc-700', 'bg-zinc-800/70', 'text-zinc-200');
+        }
+
+        function readAllDatabaseStores() {
+            return new Promise((resolve, reject) => {
+                if (!db) return reject(new Error('La base de datos aún no está disponible. Recarga la página e inténtalo de nuevo.'));
+                let tx;
+                try { tx = db.transaction(['folders', 'items', 'outfits'], 'readonly'); }
+                catch (error) { reject(error); return; }
+                const result = { folders: null, items: null, outfits: null };
+                let failed = false;
+                for (const storeName of ['folders', 'items', 'outfits']) {
+                    const request = tx.objectStore(storeName).getAll();
+                    request.onsuccess = () => { result[storeName] = request.result || []; };
+                    request.onerror = () => { failed = true; reject(request.error || new Error('No se pudieron leer los datos.')); };
+                }
+                tx.oncomplete = () => {
+                    if (failed) return;
+                    for (const storeName of ['folders', 'items', 'outfits']) result[storeName] ||= [];
+                    resolve(result);
+                };
+                tx.onerror = () => { if (!failed) reject(tx.error || new Error('No se pudieron leer todos los datos.')); };
+                tx.onabort = () => { if (!failed) reject(tx.error || new Error('La lectura se ha cancelado.')); };
+            });
+        }
+
+        function buildBackupEnvelope(stores) {
+            return {
+                format: BACKUP_FORMAT,
+                formatVersion: BACKUP_FORMAT_VERSION,
+                app: 'Mi Armario Digital - Vinted',
+                database: 'VintedArmarioAppDB_v25',
+                exportedAt: new Date().toISOString(),
+                stores: {
+                    folders: stores.folders || [],
+                    items: stores.items || [],
+                    outfits: stores.outfits || []
+                }
+            };
+        }
+
+        function makeBackupFilename(prefix = 'mi-armario-backup') {
+            const now = new Date();
+            const stamp = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0'), '-', String(now.getHours()).padStart(2, '0'), String(now.getMinutes()).padStart(2, '0'), String(now.getSeconds()).padStart(2, '0')].join('');
+            return `${prefix}-${stamp}.json`;
+        }
+
+        function downloadBackupEnvelope(envelope, prefix = 'mi-armario-backup') {
+            const json = JSON.stringify(envelope, null, 2);
+            const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = makeBackupFilename(prefix);
+            anchor.style.display = 'none';
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+        }
+
+        async function exportBackup() {
+            const button = document.getElementById('backup-export-btn');
+            if (button.disabled) return;
+            button.disabled = true;
+            button.classList.add('opacity-60', 'cursor-wait');
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparando copia...';
+            try {
+                const stores = await readAllDatabaseStores();
+                downloadBackupEnvelope(buildBackupEnvelope(stores));
+                const itemCount = stores.items.length;
+                const folderCount = stores.folders.length;
+                const outfitCount = stores.outfits.length;
+                setBackupStatus(`Copia preparada: ${folderCount} carpetas, ${itemCount} prendas y ${outfitCount} outfits. Guarda el archivo JSON en un lugar seguro.`, 'success');
+            } catch (error) {
+                console.error('Error al exportar la copia de seguridad:', error);
+                setBackupStatus(error.message || 'No se pudo crear la copia de seguridad.', 'error');
+            } finally {
+                button.disabled = false;
+                button.classList.remove('opacity-60', 'cursor-wait');
+                button.innerHTML = '<i class="fa-solid fa-download"></i> Descargar copia de seguridad';
+            }
+        }
+
+        function validateBackupEnvelope(payload) {
+            if (!payload || typeof payload !== 'object' || payload.format !== BACKUP_FORMAT || payload.formatVersion !== BACKUP_FORMAT_VERSION) {
+                throw new Error('El archivo no parece una copia de seguridad válida de Mi Armario Digital o su versión no es compatible. No se ha cambiado ningún dato.');
+            }
+            const rawStores = payload.stores;
+            if (!rawStores || !Array.isArray(rawStores.folders) || !Array.isArray(rawStores.items)) {
+                throw new Error('La copia no contiene listas válidas de carpetas y prendas. No se ha cambiado ningún dato.');
+            }
+            const folders = rawStores.folders;
+            const items = rawStores.items;
+            const outfits = Array.isArray(rawStores.outfits) ? rawStores.outfits : [];
+            const assertUniqueIds = (records, label) => {
+                const ids = new Set();
+                records.forEach((record, index) => {
+                    if (!record || typeof record !== 'object' || !Number.isSafeInteger(Number(record.id)) || Number(record.id) <= 0) {
+                        throw new Error(`La copia contiene un identificador inválido en ${label} (registro ${index + 1}). No se ha cambiado ningún dato.`);
+                    }
+                    const id = Number(record.id);
+                    if (ids.has(id)) throw new Error(`La copia contiene identificadores duplicados en ${label}. No se ha cambiado ningún dato.`);
+                    ids.add(id);
+                });
+                return ids;
+            };
+            const folderIds = assertUniqueIds(folders, 'carpetas');
+            const itemIds = assertUniqueIds(items, 'prendas');
+            assertUniqueIds(outfits, 'outfits');
+            const safeHttpsOrJpeg = (value, label, optional = false) => {
+                if ((value === null || value === undefined || value === '') && optional) return;
+                if (typeof value !== 'string') throw new Error(`Hay una imagen o un enlace inválido en ${label}. No se ha cambiado ningún dato.`);
+                if (/^data:image\/jpeg;base64,[a-z0-9+/]+=*$/i.test(value)) return;
+                try {
+                    const url = new URL(value);
+                    if (url.protocol === 'https:') return;
+                } catch (_) {}
+                throw new Error(`Hay una imagen o un enlace no compatible en ${label}. No se ha cambiado ningún dato.`);
+            };
+            folders.forEach(folder => {
+                if (typeof folder.name !== 'string' || !folder.name.trim()) throw new Error('La copia contiene una carpeta sin nombre. No se ha cambiado ningún dato.');
+                if (folder.coverImage !== undefined && folder.coverImage !== null) safeHttpsOrJpeg(folder.coverImage, 'portada de carpeta', true);
+            });
+            items.forEach(item => {
+                if (!folderIds.has(Number(item.folderId))) throw new Error(`La prenda «${String(item.title || item.id)}» apunta a una carpeta que no existe en la copia. No se ha cambiado ningún dato.`);
+                if (typeof item.title !== 'string' || typeof item.url !== 'string' || typeof item.image !== 'string') throw new Error('La copia contiene una prenda incompleta. No se ha cambiado ningún dato.');
+                if (!isVintedListingUrl(item.url)) throw new Error(`El enlace guardado para «${String(item.title || item.id)}» no parece un anuncio válido de Vinted. No se ha cambiado ningún dato.`);
+                safeHttpsOrJpeg(item.image, 'imagen de prenda');
+            });
+            outfits.forEach(outfit => {
+                if (typeof outfit.name !== 'string' || !outfit.name.trim()) throw new Error('La copia contiene un outfit sin nombre. No se ha cambiado ningún dato.');
+                if (outfit.coverImage !== undefined && outfit.coverImage !== null) {
+                    if (typeof outfit.coverImage !== 'string' || !/^data:image\/jpeg;base64,[a-z0-9+/]+=*$/i.test(outfit.coverImage)) {
+                        throw new Error('La copia contiene una portada de outfit no compatible. No se ha cambiado ningún dato.');
+                    }
+                }
+                if (outfit.itemIds !== undefined && !Array.isArray(outfit.itemIds)) throw new Error('La copia contiene una lista de prendas inválida en un outfit. No se ha cambiado ningún dato.');
+                const refs = (Array.isArray(outfit.itemIds) ? outfit.itemIds : []).map(Number);
+                if (refs.some(id => !Number.isSafeInteger(id) || !itemIds.has(id))) throw new Error(`El outfit «${outfit.name}» referencia una prenda que no existe en la copia. No se ha cambiado ningún dato.`);
+            });
+            return {
+                folders: folders.map(folder => ({ ...folder, id: Number(folder.id) })),
+                items: items.map(item => ({ ...item, id: Number(item.id), folderId: Number(item.folderId) })),
+                outfits: outfits.map(outfit => ({ ...outfit, id: Number(outfit.id), itemIds: [...new Set((Array.isArray(outfit.itemIds) ? outfit.itemIds : []).map(Number))] }))
+            };
+        }
+
+        function replaceDatabaseStores(stores) {
+            return new Promise((resolve, reject) => {
+                let tx;
+                try { tx = db.transaction(['folders', 'items', 'outfits'], 'readwrite'); }
+                catch (error) { reject(error); return; }
+                const names = ['folders', 'items', 'outfits'];
+                names.forEach(name => {
+                    const store = tx.objectStore(name);
+                    store.clear();
+                    (stores[name] || []).forEach(record => store.put(record));
+                });
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error || new Error('La base de datos rechazó la restauración.'));
+                tx.onabort = () => reject(tx.error || new Error('La restauración se canceló.'));
+            });
+        }
+
+        async function handleBackupFileSelection(event) {
+            if (backupRestoreInProgress) return;
+            const input = event.target;
+            const file = input.files && input.files[0];
+            if (!file) return;
+            input.value = '';
+            if (file.size > 100 * 1024 * 1024) {
+                setBackupStatus('El archivo supera los 100 MB. Selecciona una copia más pequeña.', 'error');
+                return;
+            }
+            try {
+                const text = await file.text();
+                const payload = JSON.parse(text);
+                const validated = validateBackupEnvelope(payload);
+                const summary = `${validated.folders.length} carpetas, ${validated.items.length} prendas y ${validated.outfits.length} outfits`;
+                const accepted = confirm(`Vas a restaurar una copia con ${summary}.
+
+Esto sustituirá todos los datos que hay ahora en este navegador. Antes se intentará descargar una copia de seguridad del estado actual.
+
+¿Quieres continuar?`);
+                if (!accepted) {
+                    setBackupStatus('Restauración cancelada. Los datos actuales no se han modificado.', 'info');
+                    return;
+                }
+                backupRestoreInProgress = true;
+                input.disabled = true;
+                document.getElementById('backup-export-btn').disabled = true;
+                try {
+                    setBackupStatus('Preparando una copia de seguridad del estado actual antes de restaurar...', 'info');
+                    const currentStores = await readAllDatabaseStores();
+                    downloadBackupEnvelope(buildBackupEnvelope(currentStores), 'mi-armario-antes-de-restaurar');
+                    await replaceDatabaseStores(validated);
+                    setBackupStatus(`Copia restaurada correctamente: ${summary}. Se ha iniciado la descarga preventiva de los datos anteriores; comprueba que se haya guardado el archivo.`, 'success');
+                    // La restauración vuelve al inicio y cierra cualquier modal que pudiera quedar debajo de este.
+                    activeScrapeRequestId++;
+                    closeAddModal();
+                    closeNewFolderModal();
+                    closeEditFolderModal();
+                    closeOutfitEditorModal();
+                    closeAddItemsToOutfitModal();
+                    closeItemDetailModal();
+                    showMainSection('folders');
+                } catch (writeError) {
+                    console.error('No se pudo completar la restauración:', writeError);
+                    setBackupStatus(writeError.message || 'No se pudo restaurar la copia. La transacción no se completó; vuelve a cargar la página y comprueba los datos. Conserva el archivo de copia de seguridad.', 'error');
+                } finally {
+                    backupRestoreInProgress = false;
+                    input.disabled = false;
+                    document.getElementById('backup-export-btn').disabled = false;
+                }
+            } catch (error) {
+                console.error('Error al restaurar copia:', error);
+                setBackupStatus(error instanceof SyntaxError ? 'El archivo no contiene JSON válido. No se ha cambiado ningún dato.' : (error.message || 'No se pudo leer la copia. No se ha cambiado ningún dato.'), 'error');
+            }
+        }
+
+        function updateBackButtonLabel() {
+            const button = document.getElementById('back-btn');
+            const destination = currentMainSection === 'outfits' ? 'Outfits' : 'Carpetas';
+            button.setAttribute('aria-label', `Volver a ${destination}`);
+            button.title = `Volver a ${destination}`;
+        }
 
         function initAppDatabase() {
             const request = indexedDB.open('VintedArmarioAppDB_v25', 2);
@@ -445,8 +748,9 @@
         function setCollectionTabState(section) {
             const foldersTab = document.getElementById('folders-tab');
             const outfitsTab = document.getElementById('outfits-tab');
-            const active = 'px-4 py-2 rounded-xl text-sm font-semibold transition bg-white text-zinc-950 shadow-sm';
-            const inactive = 'px-4 py-2 rounded-xl text-sm font-semibold transition text-zinc-300 hover:bg-zinc-800';
+            const base = 'inline-flex items-center flex-1 sm:flex-none justify-center min-h-[44px] px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition';
+            const active = `${base} bg-white text-zinc-950 shadow-sm`;
+            const inactive = `${base} text-zinc-300 hover:bg-zinc-800`;
             foldersTab.className = section === 'folders' ? active : inactive;
             outfitsTab.className = section === 'outfits' ? active : inactive;
             foldersTab.setAttribute('aria-selected', section === 'folders' ? 'true' : 'false');
@@ -454,8 +758,12 @@
         }
 
         function updateHeaderActions(section, isDetail = false) {
-            document.getElementById('new-folder-btn').classList.toggle('hidden', section !== 'folders' || isDetail);
-            document.getElementById('new-outfit-btn').classList.toggle('hidden', section !== 'outfits' || isDetail);
+            const folderButton = document.getElementById('new-folder-btn');
+            const outfitButton = document.getElementById('new-outfit-btn');
+            folderButton.classList.toggle('hidden', section !== 'folders' || isDetail);
+            outfitButton.classList.toggle('hidden', section !== 'outfits' || isDetail);
+            folderButton.setAttribute('aria-label', 'Crear carpeta');
+            outfitButton.setAttribute('aria-label', 'Crear outfit');
         }
 
         function showMainSection(section = 'folders') {
@@ -463,7 +771,7 @@
             currentFolderId = null;
             currentOutfitId = null;
             document.getElementById('back-btn').classList.add('hidden');
-            document.getElementById('app-title').innerHTML = `<i class="fa-solid fa-shirt text-zinc-400"></i> Mi Armario`;
+            document.getElementById('app-title').innerHTML = `<i class="fa-solid fa-shirt text-zinc-400" aria-hidden="true"></i> Mi Armario`;
             document.getElementById('collection-tabs').classList.remove('hidden');
             document.getElementById('folders-view').classList.toggle('hidden', currentMainSection !== 'folders');
             document.getElementById('outfits-view').classList.toggle('hidden', currentMainSection !== 'outfits');
@@ -485,6 +793,7 @@
             currentFolderId = Number(folderId);
             currentOutfitId = null;
             document.getElementById('back-btn').classList.remove('hidden');
+            updateBackButtonLabel();
             document.getElementById('app-title').textContent = folderName;
             document.getElementById('collection-tabs').classList.add('hidden');
             document.getElementById('folders-view').classList.add('hidden');
@@ -500,6 +809,7 @@
             currentFolderId = null;
             currentOutfitId = Number(outfitId);
             document.getElementById('back-btn').classList.remove('hidden');
+            updateBackButtonLabel();
             document.getElementById('app-title').textContent = outfitName || 'Outfit';
             document.getElementById('collection-tabs').classList.add('hidden');
             document.getElementById('folders-view').classList.add('hidden');
@@ -509,6 +819,35 @@
             updateHeaderActions('outfits', true);
             loadOutfitItems(currentOutfitId);
         }
+
+        function closeAllCollectionMenus() {
+            document.querySelectorAll('.collection-card-menu').forEach(menu => menu.classList.add('hidden'));
+            document.querySelectorAll('[data-collection-menu-trigger]').forEach(button => button.setAttribute('aria-expanded', 'false'));
+        }
+
+        function toggleCollectionMenu(event, type, id) {
+            if (event) event.stopPropagation();
+            const menu = document.getElementById(`collection-menu-${type}-${Number(id)}`);
+            if (!menu) return;
+            const wasOpen = !menu.classList.contains('hidden');
+            closeAllCollectionMenus();
+            if (!wasOpen) {
+                menu.classList.remove('hidden');
+                const trigger = document.querySelector(`[data-collection-menu-trigger="${type}-${Number(id)}"]`);
+                if (trigger) trigger.setAttribute('aria-expanded', 'true');
+            }
+        }
+
+        function closeCollectionMenu(type, id) {
+            const menu = document.getElementById(`collection-menu-${type}-${Number(id)}`);
+            if (menu) menu.classList.add('hidden');
+            const trigger = document.querySelector(`[data-collection-menu-trigger="${type}-${Number(id)}"]`);
+            if (trigger) trigger.setAttribute('aria-expanded', 'false');
+        }
+
+        document.addEventListener('click', event => {
+            if (!event.target.closest('.collection-card-menu') && !event.target.closest('[data-collection-menu-trigger]')) closeAllCollectionMenus();
+        });
 
         function loadFoldersView() {
             if (!db) return;
@@ -545,13 +884,19 @@
 
                         let coverHTML = '';
                         if (coverImg && (coverImg.startsWith('http') || coverImg.startsWith('data:image/jpeg;base64,'))) {
-                            coverHTML = `<img src="${coverImg}" class="w-full h-44 sm:h-52 object-cover group-hover:scale-105 transition duration-500" alt="Portada de carpeta">`;
+                            coverHTML = `<img src="${escapeHtml(coverImg)}" class="w-full h-44 sm:h-52 object-cover group-hover:scale-105 transition duration-500" alt="Portada de carpeta" loading="lazy">`;
                         } else {
                             coverHTML = `<div class="w-full h-44 sm:h-52 bg-zinc-800 flex items-center justify-center text-zinc-500 font-bold text-4xl group-hover:scale-105 transition duration-500">${escapeHtml(initial)}</div>`;
                         }
 
                         card.innerHTML = `
-                            <div class="relative overflow-hidden bg-zinc-950">${coverHTML}</div>
+                            <div class="relative overflow-hidden bg-zinc-950">${coverHTML}
+                                <button type="button" data-collection-menu-trigger="folder-${Number(folder.id)}" aria-label="Acciones de ${escapeHtml(folder.name || 'carpeta')}" aria-haspopup="menu" aria-expanded="false" onclick="event.stopPropagation(); toggleCollectionMenu(event, 'folder', ${Number(folder.id)})" class="absolute top-2 right-2 z-10 w-10 h-10 rounded-xl bg-zinc-950/90 border border-zinc-700/80 text-white hover:bg-zinc-800 flex items-center justify-center shadow-lg backdrop-blur" title="Acciones de carpeta"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                                <div id="collection-menu-folder-${Number(folder.id)}" class="collection-card-menu hidden absolute top-12 right-2 z-20 min-w-40 bg-zinc-900 border border-zinc-700 rounded-xl p-1.5 shadow-2xl" role="menu" onclick="event.stopPropagation()">
+                                    <button type="button" role="menuitem" onclick="event.stopPropagation(); closeCollectionMenu('folder', ${Number(folder.id)}); openEditFolderModal(${Number(folder.id)})" class="w-full text-left px-3 py-2.5 text-sm text-zinc-100 hover:bg-zinc-800 rounded-lg flex items-center gap-2"><i class="fa-solid fa-pen w-4 text-zinc-400"></i>Editar carpeta</button>
+                                    <button type="button" role="menuitem" onclick="event.stopPropagation(); closeCollectionMenu('folder', ${Number(folder.id)}); deleteFolderById(${Number(folder.id)}, false)" class="w-full text-left px-3 py-2.5 text-sm text-red-300 hover:bg-red-500/10 rounded-lg flex items-center gap-2"><i class="fa-solid fa-trash-can w-4"></i>Eliminar</button>
+                                </div>
+                            </div>
                             <div class="p-4 flex items-center justify-between bg-zinc-900">
                                 <div>
                                     <h3 class="font-bold text-sm sm:text-base text-white tracking-tight">${escapeHtml(folder.name || 'Carpeta')}</h3>
@@ -599,7 +944,7 @@
 
                     card.innerHTML = `
                         <div class="relative overflow-hidden bg-zinc-950 h-48 sm:h-60">
-                            <img src="${item.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="${item.title}">
+                            <img src="${escapeHtml(item.image || '')}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="${escapeHtml(item.title || 'Prenda')}" loading="lazy">
                         </div>
                         <div class="p-4 bg-zinc-950 flex flex-col justify-between flex-1">
                             <h4 class="font-medium text-xs sm:text-sm text-zinc-200 line-clamp-2 leading-snug">${escapeHtml(item.title || 'Prenda')}</h4>
@@ -669,7 +1014,7 @@
                     const coverHTML = renderOutfitCoverMarkup(outfit, outfitItems);
                     const name = escapeHtml(outfit.name || 'Outfit sin nombre');
                     const countLabel = `${outfitItems.length} ${outfitItems.length === 1 ? 'prenda' : 'prendas'}`;
-                    card.innerHTML = `<div class="relative overflow-hidden bg-zinc-950 h-44 sm:h-52 group-hover:scale-[1.01] transition duration-300">${coverHTML}<span class="absolute bottom-2 right-2 bg-zinc-950/80 border border-zinc-700/80 rounded-lg px-2 py-1 text-[10px] text-zinc-200 backdrop-blur">${outfitItems.length} ${outfitItems.length === 1 ? 'prenda' : 'prendas'}</span></div><div class="p-4 flex items-center justify-between bg-zinc-900 gap-2"><div class="min-w-0"><h3 class="font-bold text-sm sm:text-base text-white tracking-tight truncate">${name}</h3><p class="text-xs text-zinc-400 mt-0.5">${countLabel}</p></div><div class="w-8 h-8 rounded-full shrink-0 bg-zinc-800/80 flex items-center justify-center text-zinc-400 group-hover:bg-white group-hover:text-zinc-950 transition"><i class="fa-solid fa-chevron-right text-xs"></i></div></div>`;
+                    card.innerHTML = `<div class="relative overflow-hidden bg-zinc-950 h-44 sm:h-52 group-hover:scale-[1.01] transition duration-300">${coverHTML}<span class="absolute bottom-2 right-2 bg-zinc-950/80 border border-zinc-700/80 rounded-lg px-2 py-1 text-[10px] text-zinc-200 backdrop-blur">${outfitItems.length} ${outfitItems.length === 1 ? 'prenda' : 'prendas'}</span><button type="button" data-collection-menu-trigger="outfit-${Number(outfit.id)}" aria-label="Acciones de ${name}" aria-haspopup="menu" aria-expanded="false" onclick="event.stopPropagation(); toggleCollectionMenu(event, 'outfit', ${Number(outfit.id)})" class="absolute top-2 right-2 z-10 w-10 h-10 rounded-xl bg-zinc-950/90 border border-zinc-700/80 text-white hover:bg-zinc-800 flex items-center justify-center shadow-lg backdrop-blur" title="Acciones del outfit"><i class="fa-solid fa-ellipsis-vertical"></i></button><div id="collection-menu-outfit-${Number(outfit.id)}" class="collection-card-menu hidden absolute top-12 right-2 z-20 min-w-40 bg-zinc-900 border border-zinc-700 rounded-xl p-1.5 shadow-2xl" role="menu" onclick="event.stopPropagation()"><button type="button" role="menuitem" onclick="event.stopPropagation(); closeCollectionMenu('outfit', ${Number(outfit.id)}); openEditOutfitModal(${Number(outfit.id)})" class="w-full text-left px-3 py-2.5 text-sm text-zinc-100 hover:bg-zinc-800 rounded-lg flex items-center gap-2"><i class="fa-solid fa-pen w-4 text-zinc-400"></i>Editar outfit</button><button type="button" role="menuitem" onclick="event.stopPropagation(); closeCollectionMenu('outfit', ${Number(outfit.id)}); deleteOutfitById(${Number(outfit.id)}, false)" class="w-full text-left px-3 py-2.5 text-sm text-red-300 hover:bg-red-500/10 rounded-lg flex items-center gap-2"><i class="fa-solid fa-trash-can w-4"></i>Eliminar</button></div></div><div class="p-4 flex items-center justify-between bg-zinc-900 gap-2"><div class="min-w-0"><h3 class="font-bold text-sm sm:text-base text-white tracking-tight truncate">${name}</h3><p class="text-xs text-zinc-400 mt-0.5">${countLabel}</p></div><div class="w-8 h-8 rounded-full shrink-0 bg-zinc-800/80 flex items-center justify-center text-zinc-400 group-hover:bg-white group-hover:text-zinc-950 transition"><i class="fa-solid fa-chevron-right text-xs"></i></div></div>`;
                     card.onclick = () => openOutfit(outfit.id, outfit.name || 'Outfit');
                     grid.appendChild(card);
                 });
@@ -868,11 +1213,20 @@
 
         function deleteCurrentOutfit() {
             if (!currentOutfitId) return;
+            deleteOutfitById(currentOutfitId, true);
+        }
+
+        function deleteOutfitById(outfitIdValue, returnToList = false) {
+            if (!db || !outfitIdValue) return;
+            const id = Number(outfitIdValue);
             if (!confirm('¿Eliminar este outfit? Solo se eliminará el conjunto; las prendas seguirán guardadas en sus carpetas y en otros outfits.')) return;
-            const id = Number(currentOutfitId);
             const tx = db.transaction('outfits', 'readwrite');
             tx.objectStore('outfits').delete(id);
-            tx.oncomplete = () => showMainSection('outfits');
+            tx.oncomplete = () => {
+                closeAllCollectionMenus();
+                if (returnToList) showMainSection('outfits');
+                else loadOutfitsView();
+            };
             tx.onerror = () => alert('No se pudo eliminar el outfit. Las prendas se mantienen intactas.');
         }
 
@@ -1280,9 +1634,14 @@
 
         function deleteCurrentFolder() {
             if (!currentFolderId) return;
-            if (!confirm("¿Seguro que quieres eliminar esta carpeta y sus prendas? Las prendas también se quitarán de los outfits, pero las demás prendas de esos outfits se conservarán.")) return;
+            deleteFolderById(currentFolderId, true);
+        }
 
-            const folderId = Number(currentFolderId);
+        function deleteFolderById(folderIdValue, returnHome = false) {
+            if (!db || !folderIdValue) return;
+            const folderId = Number(folderIdValue);
+            if (!confirm('¿Eliminar esta carpeta y sus prendas? Las prendas también se quitarán de los outfits, pero las demás prendas de esos outfits se conservarán.')) return;
+
             const tx = db.transaction(['folders', 'items', 'outfits'], 'readwrite');
             const folderStore = tx.objectStore('folders');
             const itemStore = tx.objectStore('items');
@@ -1291,8 +1650,10 @@
             const outfitsReq = outfitStore.getAll();
             let deletedItemIds = null;
             let outfits = null;
+            let applied = false;
             const applyChanges = () => {
-                if (deletedItemIds === null || outfits === null) return;
+                if (applied || deletedItemIds === null || outfits === null) return;
+                applied = true;
                 const deleted = new Set(deletedItemIds.map(String));
                 deletedItemIds.forEach(itemId => itemStore.delete(itemId));
                 outfits.forEach(outfit => {
@@ -1304,7 +1665,11 @@
             };
             itemReq.onsuccess = () => { deletedItemIds = itemReq.result || []; applyChanges(); };
             outfitsReq.onsuccess = () => { outfits = outfitsReq.result || []; applyChanges(); };
-            tx.oncomplete = () => goHome();
+            tx.oncomplete = () => {
+                closeAllCollectionMenus();
+                if (returnHome) goHome();
+                else loadFoldersView();
+            };
             tx.onerror = () => alert('No se pudo eliminar la carpeta. La operación se ha cancelado y no se han cambiado los outfits.');
         }
 
@@ -1737,6 +2102,7 @@
         async function openItemDetailModal(item, sourceOutfitId = null) {
             activeEditingItem = item;
             activeItemSourceOutfitId = sourceOutfitId ? Number(sourceOutfitId) : null;
+            activeItemSourceFolderId = activeItemSourceOutfitId ? null : (currentFolderId ? Number(currentFolderId) : null);
             document.getElementById('detail-image').src = item.image;
             document.getElementById('detail-vinted-link').href = item.url;
             document.getElementById('edit-item-id').value = item.id;
@@ -1754,6 +2120,7 @@
             document.getElementById('item-detail-modal').classList.add('hidden');
             activeEditingItem = null;
             activeItemSourceOutfitId = null;
+            activeItemSourceFolderId = null;
             document.getElementById('delete-item-btn').classList.remove('hidden');
             document.getElementById('remove-from-outfit-btn').classList.add('hidden');
         }
@@ -1763,6 +2130,7 @@
             if (!activeEditingItem) return;
 
             const sourceOutfitId = activeItemSourceOutfitId;
+            const sourceFolderId = activeItemSourceFolderId;
             const updatedTitle = document.getElementById('edit-item-title').value.trim();
             const updatedUrl = document.getElementById('edit-item-url').value.trim();
             const updatedFolderId = parseInt(document.getElementById('edit-item-folder').value, 10);
@@ -1780,6 +2148,10 @@
                 if (sourceOutfitId) {
                     loadOutfitItems(sourceOutfitId);
                     loadOutfitsView();
+                } else if (sourceFolderId) {
+                    const folderName = document.getElementById('current-folder-name').textContent || 'Carpeta';
+                    loadFolderItems(sourceFolderId, folderName);
+                    loadFoldersView();
                 } else {
                     goHome();
                 }
@@ -1792,6 +2164,8 @@
             if (!confirm('¿Eliminar esta prenda de tu armario? También desaparecerá de los outfits en los que esté incluida.')) return;
 
             const itemId = Number(activeEditingItem.id);
+            const sourceFolderId = activeItemSourceFolderId;
+            const sourceFolderName = document.getElementById('current-folder-name').textContent || 'Carpeta';
             const tx = db.transaction(['items', 'outfits'], 'readwrite');
             tx.objectStore('items').delete(itemId);
             const outfitsStore = tx.objectStore('outfits');
@@ -1805,7 +2179,12 @@
             };
             tx.oncomplete = () => {
                 closeItemDetailModal();
-                goHome();
+                if (sourceFolderId) {
+                    loadFolderItems(sourceFolderId, sourceFolderName);
+                    loadFoldersView();
+                } else {
+                    goHome();
+                }
             };
             tx.onerror = () => alert('No se pudo eliminar la prenda. No se han guardado cambios parciales.');
         }
