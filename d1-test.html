@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Prueba de Mi Armario Digital API</title>
+  <script>
+    // Defined before Turnstile loads to avoid an async-script race.
+    window.__turnstileLoaded = false;
+    window.onTurnstileLoad = function () { window.__turnstileLoaded = true; };
+  </script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad" async defer></script>
+  <style>
+    :root { color-scheme: dark; --bg:#09090b; --panel:#18181b; --line:#3f3f46; --text:#f4f4f5; --muted:#a1a1aa; --accent:#d4d4d8; --ok:#6ee7b7; --err:#fca5a5; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:radial-gradient(ellipse at top,#18181b 0%,var(--bg) 58%); color:var(--text); font:16px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; min-height:100vh; }
+    main { width:min(760px,100%); margin:0 auto; padding:28px 18px 56px; }
+    .eyebrow { color:var(--muted); text-transform:uppercase; letter-spacing:.15em; font-size:.75rem; font-weight:700; }
+    h1 { font-size:clamp(1.7rem,4vw,2.35rem); line-height:1.12; margin:.55rem 0 .8rem; }
+    p { color:#d4d4d8; }
+    .panel { border:1px solid var(--line); border-radius:20px; padding:20px; margin:18px 0; background:rgba(24,24,27,.92); box-shadow:0 18px 55px #0003; }
+    label { display:block; font-size:.9rem; color:#d4d4d8; margin-bottom:7px; font-weight:600; }
+    input { width:100%; border:1px solid #52525b; border-radius:12px; padding:12px 13px; background:#09090b; color:white; font:inherit; }
+    button { border:1px solid #52525b; border-radius:12px; padding:11px 15px; background:#e4e4e7; color:#18181b; font:inherit; font-weight:700; cursor:pointer; min-height:44px; }
+    button.secondary { background:#27272a; color:#f4f4f5; }
+    button:disabled { opacity:.45; cursor:not-allowed; }
+    .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:12px; }
+    .status { border:1px solid #3f3f46; border-radius:12px; padding:12px 14px; background:#09090b; color:#d4d4d8; overflow-wrap:anywhere; }
+    .status.ok { border-color:#047857; color:var(--ok); }
+    .status.error { border-color:#991b1b; color:var(--err); }
+    .small { font-size:.85rem; color:var(--muted); }
+    #turnstile-container { min-height:66px; margin:16px 0 8px; }
+    code { color:#e4e4e7; overflow-wrap:anywhere; }
+    .hidden { display:none !important; }
+    @media (max-width:480px) { .panel { padding:16px; border-radius:16px; } .row button { width:100%; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Mi Armario Digital · Entorno de prueba</div>
+  <h1>Comprobar la API y crear un armario de prueba</h1>
+  <p>Esta página temporal verifica que la API puede hablar con Cloudflare D1 y que Turnstile permite crear un armario. No modifica tu web principal ni importa tus prendas reales.</p>
+
+  <section class="panel">
+    <h2>1. Estado del servicio</h2>
+    <div id="health-status" class="status">Comprobando conexión…</div>
+    <div class="row"><button id="health-refresh" class="secondary" type="button">Volver a comprobar</button></div>
+  </section>
+
+  <section class="panel">
+    <h2>2. Preparar Turnstile</h2>
+    <p class="small">Copia la <strong>Site key</strong> pública desde Cloudflare Turnstile y pégala aquí. No introduzcas la Secret key; esa debe quedarse en Cloudflare.</p>
+    <label for="sitekey">Site key pública</label>
+    <input id="sitekey" type="text" autocomplete="off" spellcheck="false" placeholder="Pega aquí la Site key pública">
+    <div class="row"><button id="render-widget" type="button" disabled>Cargar comprobación</button></div>
+    <div id="turnstile-container"></div>
+    <div id="turnstile-status" class="status">Esperando la Site key pública.</div>
+  </section>
+
+  <section class="panel">
+    <h2>3. Crear un armario vacío de prueba</h2>
+    <p class="small">Solo pulsa el botón cuando Turnstile confirme que la comprobación se ha completado. La prueba crea un armario vacío real en D1; no crea carpetas ni modifica datos de la aplicación actual.</p>
+    <div class="row"><button id="create-workspace" type="button" disabled>Crear armario de prueba</button></div>
+    <div id="create-status" class="status" style="margin-top:14px">Todavía no se ha creado ningún armario de prueba.</div>
+  </section>
+
+  <p class="small">Al terminar esta prueba, podremos retirar este archivo del repositorio. No compartas capturas que muestren credenciales o tokens.</p>
+</main>
+<script>
+  const API_BASE = 'https://mi-armario-api.marcos2005murillo.workers.dev';
+  let turnstileReady = Boolean(window.__turnstileLoaded);
+  let widgetId = null;
+  let turnstileToken = '';
+  let created = false;
+
+  const el = id => document.getElementById(id);
+
+  function setStatus(id, message, type = '') {
+    const node = el(id);
+    node.textContent = message;
+    node.classList.remove('ok', 'error');
+    if (type) node.classList.add(type);
+  }
+
+  window.onTurnstileLoad = function () {
+    window.__turnstileLoaded = true;
+    turnstileReady = true;
+    el('render-widget').disabled = false;
+  };
+  if (turnstileReady) el('render-widget').disabled = false;
+  window.addEventListener('load', () => {
+    if (window.turnstile) {
+      turnstileReady = true;
+      el('render-widget').disabled = false;
+    }
+  });
+
+  async function checkHealth() {
+    el('health-refresh').disabled = true;
+    setStatus('health-status', 'Comprobando conexión con la API…');
+    try {
+      const response = await fetch(API_BASE + '/api/health', { cache: 'no-store' });
+      const data = await response.json();
+      if (!response.ok || !data.ok || data.database !== 'connected') {
+        throw new Error(data.message || data.database || 'La API no está lista.');
+      }
+      setStatus('health-status', `Conexión correcta · API ${data.version} · D1 conectado · esquema ${data.schemaVersion}`, 'ok');
+    } catch (error) {
+      setStatus('health-status', 'No se pudo verificar la API: ' + (error.message || 'error de conexión'), 'error');
+    } finally {
+      el('health-refresh').disabled = false;
+    }
+  }
+
+  function renderWidget() {
+    const sitekey = el('sitekey').value.trim();
+    if (!turnstileReady || !window.turnstile) {
+      setStatus('turnstile-status', 'Turnstile todavía se está cargando. Espera unos segundos e inténtalo de nuevo.', 'error');
+      return;
+    }
+    if (sitekey.length < 10 || /secret/i.test(sitekey)) {
+      setStatus('turnstile-status', 'Introduce la Site key pública que aparece en Cloudflare.', 'error');
+      return;
+    }
+    if (widgetId !== null) {
+      try { window.turnstile.remove(widgetId); } catch (_) {}
+      widgetId = null;
+    }
+    turnstileToken = '';
+    el('create-workspace').disabled = true;
+    el('turnstile-container').replaceChildren();
+    setStatus('turnstile-status', 'Cargando la comprobación de Turnstile…');
+    try {
+      widgetId = window.turnstile.render('#turnstile-container', {
+        sitekey,
+        action: 'register',
+        theme: 'dark',
+        callback: token => {
+          turnstileToken = token;
+          el('create-workspace').disabled = created;
+          setStatus('turnstile-status', 'Comprobación completada. Ya puedes crear el armario de prueba.', 'ok');
+        },
+        'expired-callback': () => {
+          turnstileToken = '';
+          el('create-workspace').disabled = true;
+          setStatus('turnstile-status', 'La comprobación ha caducado. Completa Turnstile de nuevo.', 'error');
+        },
+        'error-callback': () => {
+          turnstileToken = '';
+          el('create-workspace').disabled = true;
+          setStatus('turnstile-status', 'Turnstile ha tenido un error. Revisa la Site key y el dominio autorizado.', 'error');
+        }
+      });
+      setStatus('turnstile-status', 'Completa la comprobación si el widget te lo solicita.');
+    } catch (error) {
+      setStatus('turnstile-status', 'No se pudo cargar Turnstile: ' + (error.message || 'error'), 'error');
+    }
+  }
+
+  async function createWorkspace() {
+    if (created || !turnstileToken) return;
+    const accepted = window.confirm('Esto creará un armario vacío de prueba en Cloudflare D1. No se añadirá a tu web actual ni contendrá prendas. ¿Continuar?');
+    if (!accepted) return;
+
+    const button = el('create-workspace');
+    button.disabled = true;
+    setStatus('create-status', 'Creando el armario de prueba…');
+    try {
+      const response = await fetch(API_BASE + '/api/v1/workspaces', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ turnstileToken })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || ('La API respondió ' + response.status));
+      // Do not allow a second creation if workspace creation succeeded but the follow-up test fails.
+      created = true;
+      el('create-workspace').disabled = true;
+
+      // Token kept in memory only for the immediate authenticated smoke test.
+      // It is not written to localStorage or displayed in the page.
+      const armoryResponse = await fetch(API_BASE + '/api/v1/armory', {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + data.accessToken },
+        cache: 'no-store'
+      });
+      const armory = await armoryResponse.json();
+      if (!armoryResponse.ok) throw new Error('El armario se creó, pero falló la prueba de acceso: ' + (armory.error || armoryResponse.status));
+
+      created = true;
+      turnstileToken = '';
+      el('create-workspace').disabled = true;
+      setStatus('create-status', `Prueba completada. Armario creado en D1 y acceso verificado. Identificador: ${data.workspaceId}. Datos iniciales: ${armory.folders.length} carpetas, ${armory.items.length} prendas y ${armory.outfits.length} outfits. Este es un armario vacío de prueba; la credencial no se ha guardado ni mostrado.`, 'ok');
+      setStatus('turnstile-status', 'Comprobación utilizada correctamente.', 'ok');
+    } catch (error) {
+      turnstileToken = '';
+      el('create-workspace').disabled = true;
+      setStatus('create-status', 'No se pudo completar la prueba: ' + (error.message || 'error de conexión') + ' Si la respuesta indica un error de Turnstile, verifica que el widget autorice marcos2005murillo-pixel.github.io.', 'error');
+      if (widgetId !== null) {
+        try { window.turnstile.reset(widgetId); } catch (_) {}
+      }
+    }
+  }
+
+  el('health-refresh').addEventListener('click', checkHealth);
+  el('render-widget').addEventListener('click', renderWidget);
+  el('create-workspace').addEventListener('click', createWorkspace);
+  checkHealth();
+</script>
+</body>
+</html>
