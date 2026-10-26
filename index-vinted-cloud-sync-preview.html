@@ -1,0 +1,2751 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Armario Digital - Vinted</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        :focus-visible { outline: 2px solid #a1a1aa; outline-offset: 3px; }
+        button, input, select { -webkit-tap-highlight-color: transparent; }
+        @media (max-width: 639px) {
+            #collection-tabs { width: calc(100% + 1.5rem); margin-left: -.75rem; margin-right: -.75rem; border-radius: 0; border-left: 0; border-right: 0; }
+            .mobile-action-button { min-width: 40px; min-height: 40px; padding-left: .65rem; padding-right: .65rem; }
+        }
+    </style>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col selection:bg-zinc-800 selection:text-white">
+
+    <!-- CABECERA -->
+    <header class="sticky top-0 z-40 bg-zinc-900/95 backdrop-blur-md border-b border-zinc-800 px-3 sm:px-4 py-3 flex items-center justify-between gap-2 min-h-[64px]">
+        <div class="flex items-center space-x-3">
+            <button id="back-btn" type="button" onclick="goHome()" aria-label="Volver a Carpetas" title="Volver a Carpetas" class="hidden shrink-0 text-zinc-400 hover:text-white transition p-2 rounded-xl hover:bg-zinc-800 min-w-[40px] min-h-[40px]">
+                <i class="fa-solid fa-arrow-left text-lg"></i>
+            </button>
+            <h1 id="app-title" class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2 min-w-0 truncate">
+                <i class="fa-solid fa-shirt text-zinc-400"></i> Mi Armario
+            </h1>
+        </div>
+        <div id="header-actions" class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button id="new-folder-btn" type="button" onclick="openNewFolderModal()" aria-label="Nueva carpeta" title="Nueva carpeta" class="mobile-action-button bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-2.5 sm:px-3 py-2 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 border border-zinc-700/50">
+                <i class="fa-solid fa-folder-plus"></i> <span class="hidden sm:inline">Nueva Carpeta</span>
+            </button>
+            <button id="new-outfit-btn" type="button" onclick="openNewOutfitModal()" aria-label="Nuevo outfit" title="Nuevo outfit" class="mobile-action-button hidden flex bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-2.5 sm:px-3 py-2 rounded-xl text-sm font-medium transition items-center justify-center gap-2 border border-zinc-700/50">
+                <i class="fa-solid fa-layer-group"></i> <span class="hidden sm:inline">Nuevo Outfit</span>
+            </button>
+            <button id="header-add-item-btn" type="button" onclick="openAddModal()" aria-label="Añadir prenda" title="Añadir prenda" class="mobile-action-button bg-white text-zinc-950 hover:bg-zinc-200 px-2.5 sm:px-3.5 py-2 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 shadow-sm">
+                <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Añadir Prenda</span>
+            </button>
+            <button id="backup-open-btn" type="button" onclick="openBackupModal()" aria-label="Copias de seguridad" title="Copias de seguridad" class="mobile-action-button bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-2.5 py-2 rounded-xl text-sm font-medium transition flex items-center justify-center border border-zinc-700/50">
+                <i class="fa-solid fa-box-archive"></i><span class="hidden sm:inline ml-2">Copias</span>
+            </button>
+            <button id="cloud-open-btn" type="button" onclick="openCloudModal()" aria-label="Sincronización en la nube" title="Sincronización en la nube" class="mobile-action-button bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-2.5 py-2 rounded-xl text-sm font-medium transition flex items-center justify-center border border-zinc-700/50">
+                <i id="cloud-header-icon" class="fa-solid fa-cloud"></i><span class="hidden sm:inline ml-2">Nube</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
+        <div id="collection-tabs" class="sticky top-[64px] sm:top-[68px] z-30 flex gap-2 mb-6 p-1 bg-zinc-950/95 sm:bg-zinc-900/95 backdrop-blur-md border border-zinc-800 rounded-2xl w-full sm:w-fit" role="tablist" aria-label="Secciones del armario">
+            <button id="folders-tab" type="button" onclick="showMainSection('folders')" class="flex-1 sm:flex-none justify-center min-h-[44px] px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition" role="tab" aria-selected="true" aria-controls="folders-view">
+                <i class="fa-solid fa-folder mr-2"></i>Carpetas
+            </button>
+            <button id="outfits-tab" type="button" onclick="showMainSection('outfits')" class="flex-1 sm:flex-none justify-center min-h-[44px] px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition" role="tab" aria-selected="false" aria-controls="outfits-view">
+                <i class="fa-solid fa-layer-group mr-2"></i>Outfits
+            </button>
+        </div>
+
+        <!-- VISTA 1: TARJETAS DE CARPETAS (HOME) -->
+        <section id="folders-view" class="space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold tracking-tight">Carpetas</h2>
+                <span id="folders-count" class="text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-full">0 carpetas</span>
+            </div>
+            
+            <div id="folders-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                <!-- Se inyecta dinámicamente -->
+            </div>
+        </section>
+
+        <!-- VISTA OUTFITS: COLECCIONES DE PRENDAS REFERENCIADAS -->
+        <section id="outfits-view" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold tracking-tight">Outfits</h2>
+                    <p class="text-sm text-zinc-400 mt-1">Combina prendas guardadas sin duplicarlas.</p>
+                </div>
+                <span id="outfits-count" class="text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-full">0 outfits</span>
+            </div>
+            <div id="outfits-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"></div>
+        </section>
+
+        <!-- VISTA 2: DETALLE DE CARPETA (PRENDAS) -->
+        <section id="folder-detail-view" class="hidden space-y-6">
+            <div class="flex items-center justify-between bg-zinc-900/50 border border-zinc-800/60 p-4 rounded-2xl">
+                <div>
+                    <h2 id="current-folder-name" class="text-xl font-bold tracking-tight text-white">Nombre de Carpeta</h2>
+                    <p id="current-folder-count" class="text-xs text-zinc-400 mt-0.5">0 prendas guardadas</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openEditFolderModal(currentFolderId)" class="text-zinc-200 hover:text-white hover:bg-zinc-800 border border-zinc-700/70 px-3 py-2.5 rounded-xl transition text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-pen"></i> <span>Editar</span>
+                    </button>
+                    <button onclick="deleteCurrentFolder()" class="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2.5 rounded-xl transition text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-trash-can"></i> <span class="hidden sm:inline">Eliminar Carpeta</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="items-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                <!-- Se inyecta dinámicamente -->
+            </div>
+        </section>
+
+        <!-- VISTA DETALLE DE OUTFIT -->
+        <section id="outfit-detail-view" class="hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-zinc-900/50 border border-zinc-800/60 p-4 rounded-2xl">
+                <div>
+                    <h2 id="current-outfit-name" class="text-xl font-bold tracking-tight text-white">Nombre del outfit</h2>
+                    <p id="current-outfit-count" class="text-xs text-zinc-400 mt-0.5">0 prendas</p>
+                    <p class="text-xs text-zinc-500 mt-1">Quitar una prenda de aquí no la elimina de tus carpetas.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openAddItemsToOutfitModal()" class="bg-white hover:bg-zinc-200 text-zinc-950 px-3 py-2.5 rounded-xl transition text-sm font-semibold flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Añadir prendas
+                    </button>
+                    <button onclick="openEditOutfitModal(currentOutfitId)" class="text-zinc-200 hover:text-white hover:bg-zinc-800 border border-zinc-700/70 px-3 py-2.5 rounded-xl transition text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-pen"></i> Editar
+                    </button>
+                    <button onclick="deleteCurrentOutfit()" class="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2.5 rounded-xl transition text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-trash-can"></i> <span class="hidden sm:inline">Eliminar outfit</span>
+                    </button>
+                </div>
+            </div>
+            <div id="outfit-items-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"></div>
+        </section>
+
+    </main>
+
+    <!-- MODAL: AÑADIR PRENDA NUEVA -->
+    <div id="add-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold tracking-tight">Añadir Prenda</h3>
+                <button onclick="closeAddModal()" class="text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-zinc-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- ESTADO DE EXTRAE FOTO -->
+            <div id="scraping-status" class="hidden bg-zinc-800/60 border border-zinc-700/50 p-3 rounded-2xl text-xs text-zinc-300 flex items-center gap-3">
+                <div class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin shrink-0"></div>
+                <span id="scraping-text">Buscando automáticamente la foto real de Vinted...</span>
+            </div>
+
+            <!-- VISTA PREVIA DE LA IMAGEN ENCONTRADA -->
+            <div id="image-preview-container" class="hidden w-full h-48 bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800 relative">
+                <img id="image-preview" src="" alt="Prenda" class="w-full h-full object-cover">
+            </div>
+
+            <form onsubmit="handleAddItem(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Enlace de Vinted</label>
+                    <input type="url" id="item-url" required placeholder="https://www.vinted.es/items/..." 
+                        class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Nombre de la Prenda</label>
+                    <input type="text" id="item-title" required placeholder="Ej. Chaqueta Vinted" 
+                        class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Guardar en Carpeta</label>
+                    <select id="item-folder" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                        <!-- Opciones dinámicas -->
+                    </select>
+                </div>
+
+                <div class="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-3 space-y-2">
+                    <div>
+                        <p class="text-xs font-medium text-zinc-300">Añadir también a outfits (opcional)</p>
+                        <p class="text-xs text-zinc-500 mt-1">La prenda se guardará en una carpeta como siempre. Aquí solo eliges en qué conjuntos quieres reutilizarla.</p>
+                    </div>
+                    <div id="item-outfits-options" class="max-h-32 overflow-y-auto space-y-2 text-sm">
+                        <p class="text-xs text-zinc-500">Cargando outfits...</p>
+                    </div>
+                </div>
+
+                <input type="hidden" id="item-image-url" value="">
+
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeAddModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium py-3 rounded-xl text-sm transition">Cancelar</button>
+                    <button type="submit" id="save-btn" disabled class="flex-1 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold py-3 rounded-xl text-sm transition shadow-sm opacity-40 cursor-not-allowed">Esperando foto automática...</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: NUEVA CARPETA -->
+    <div id="new-folder-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold tracking-tight">Nueva Carpeta</h3>
+                <button onclick="closeNewFolderModal()" class="text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-zinc-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="handleCreateFolder(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Nombre de la carpeta</label>
+                    <input type="text" id="new-folder-name" required placeholder="Ej. Marcos, Carol..." 
+                        class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeNewFolderModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium py-3 rounded-xl text-sm transition">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold py-3 rounded-xl text-sm transition">Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: EDITAR CARPETA -->
+    <div id="edit-folder-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold tracking-tight">Editar carpeta</h3>
+                <button type="button" onclick="closeEditFolderModal()" class="text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-zinc-800 transition" aria-label="Cerrar edición de carpeta">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="handleSaveFolderEdit(event)" class="space-y-4">
+                <input type="hidden" id="edit-folder-id">
+                <div>
+                    <label for="edit-folder-name" class="block text-xs font-medium text-zinc-400 mb-1.5">Nombre de la carpeta</label>
+                    <input type="text" id="edit-folder-name" required maxlength="80"
+                        class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-xs font-medium text-zinc-400">Portada de la carpeta</label>
+                    <div class="w-full h-48 bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800 relative flex items-center justify-center">
+                        <img id="edit-folder-cover-preview" src="" alt="Vista previa de la portada" class="hidden w-full h-full object-cover">
+                        <div id="edit-folder-cover-placeholder" class="px-5 text-center text-sm text-zinc-500">
+                            <i class="fa-solid fa-images text-2xl mb-2"></i>
+                            <p>Portada automática</p>
+                            <p class="text-xs mt-1">Se usará la foto de la última prenda de la carpeta.</p>
+                        </div>
+                    </div>
+                    <input type="file" id="edit-folder-cover-file" accept="image/*" onchange="handleFolderCoverSelection(event)"
+                        class="block w-full text-sm text-zinc-400 file:mr-3 file:rounded-xl file:border-0 file:bg-zinc-800 file:px-3 file:py-2 file:text-zinc-200 hover:file:bg-zinc-700">
+                    <p class="text-xs text-zinc-500">La imagen se guarda en este navegador. Se optimiza automáticamente para ocupar menos espacio.</p>
+                    <button type="button" onclick="resetFolderCoverToAutomatic()" class="text-xs text-zinc-300 hover:text-white underline underline-offset-4">Usar portada automática</button>
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeEditFolderModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium py-3 rounded-xl text-sm transition">Cancelar</button>
+                    <button type="submit" id="save-folder-edit-btn" class="flex-1 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold py-3 rounded-xl text-sm transition shadow-sm">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CREAR / EDITAR OUTFIT -->
+    <div id="outfit-editor-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between">
+                <h3 id="outfit-editor-title" class="text-lg font-bold tracking-tight">Nuevo outfit</h3>
+                <button type="button" onclick="closeOutfitEditorModal()" class="text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-zinc-800 transition" aria-label="Cerrar edición de outfit">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="handleSaveOutfit(event)" class="space-y-4">
+                <input type="hidden" id="edit-outfit-id" value="">
+                <div>
+                    <label for="edit-outfit-name" class="block text-xs font-medium text-zinc-400 mb-1.5">Nombre del outfit</label>
+                    <input type="text" id="edit-outfit-name" required maxlength="80" placeholder="Ej. Sábado casual, Sesión de fotos..."
+                        class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-xs font-medium text-zinc-400">Portada</label>
+                    <div id="outfit-cover-preview" class="w-full h-48 bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800 relative flex items-center justify-center"></div>
+                    <input type="file" id="edit-outfit-cover-file" accept="image/*" onchange="handleOutfitCoverSelection(event)"
+                        class="block w-full text-sm text-zinc-400 file:mr-3 file:rounded-xl file:border-0 file:bg-zinc-800 file:px-3 file:py-2 file:text-zinc-200 hover:file:bg-zinc-700">
+                    <p class="text-xs text-zinc-500">Si no eliges una foto, se crea automáticamente un collage con las prendas del outfit. La imagen personalizada se guarda en este navegador.</p>
+                    <button type="button" onclick="resetOutfitCoverToAutomatic()" class="text-xs text-zinc-300 hover:text-white underline underline-offset-4">Usar collage automático</button>
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeOutfitEditorModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium py-3 rounded-xl text-sm transition">Cancelar</button>
+                    <button type="submit" id="save-outfit-btn" class="flex-1 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold py-3 rounded-xl text-sm transition shadow-sm">Guardar outfit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: AÑADIR PRENDAS EXISTENTES A UN OUTFIT -->
+    <div id="add-items-to-outfit-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <h3 class="text-lg font-bold tracking-tight">Añadir prendas al outfit</h3>
+                    <p class="text-xs text-zinc-400 mt-1">Selecciona prendas de cualquiera de tus carpetas.</p>
+                </div>
+                <button type="button" onclick="closeAddItemsToOutfitModal()" class="text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-zinc-800 transition" aria-label="Cerrar selector de prendas">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div id="outfit-items-picker" class="space-y-2"></div>
+            <div class="pt-2 flex gap-3">
+                <button type="button" onclick="closeAddItemsToOutfitModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium py-3 rounded-xl text-sm transition">Cancelar</button>
+                <button type="button" onclick="handleAddSelectedItemsToOutfit()" class="flex-1 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold py-3 rounded-xl text-sm transition shadow-sm">Añadir seleccionadas</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: VISTA PREVIA Y EDICIÓN -->
+    <div id="item-detail-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold tracking-tight">Detalle de la Prenda</h3>
+                <button onclick="closeItemDetailModal()" class="text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-zinc-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="w-full h-72 sm:h-80 bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800/80 flex items-center justify-center relative">
+                <img id="detail-image" src="" alt="Prenda" class="w-full h-full object-cover">
+                <a id="detail-vinted-link" href="#" target="_blank" class="absolute bottom-3 right-3 bg-zinc-900/90 hover:bg-zinc-900 border border-zinc-700/80 text-white px-3.5 py-2 rounded-xl text-xs font-semibold backdrop-blur-md transition flex items-center gap-2 shadow-lg">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir en Vinted
+                </a>
+            </div>
+
+            <form onsubmit="handleSaveItemEdit(event)" class="space-y-4">
+                <input type="hidden" id="edit-item-id">
+                
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Nombre</label>
+                    <input type="text" id="edit-item-title" required 
+                        class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Enlace de Vinted</label>
+                    <input type="url" id="edit-item-url" required 
+                        class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Mover a Carpeta</label>
+                    <select id="edit-item-folder" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-500 transition">
+                        <!-- Opciones dinámicas -->
+                    </select>
+                </div>
+
+                <div class="pt-3 flex items-center justify-between border-t border-zinc-800">
+                    <button type="button" id="delete-item-btn" onclick="deleteItemFromDetail()" class="text-red-400 hover:text-red-300 hover:bg-red-500/10 px-4 py-2.5 rounded-xl transition text-sm font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-trash-can"></i> Eliminar Prenda
+                    </button>
+                    <button type="button" id="remove-from-outfit-btn" onclick="removeActiveItemFromOutfit()" class="hidden flex text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 px-4 py-2.5 rounded-xl transition text-sm font-medium items-center gap-2">
+                        <i class="fa-solid fa-link-slash"></i> Quitar del outfit
+                    </button>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="closeItemDetailModal()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-2.5 rounded-xl text-sm font-medium transition">Cancelar</button>
+                        <button type="submit" class="bg-white hover:bg-zinc-200 text-zinc-950 px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm">Guardar Cambios</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: COPIA DE SEGURIDAD Y RESTAURACIÓN -->
+    <div id="backup-modal" class="fixed inset-0 z-[70] bg-black/85 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="backup-modal-title">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 shadow-2xl space-y-5">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <h3 id="backup-modal-title" class="text-lg font-bold tracking-tight">Copia de seguridad</h3>
+                    <p class="text-sm text-zinc-400 mt-1">Guarda o recupera tus carpetas, prendas, outfits y portadas personalizadas.</p>
+                </div>
+                <button type="button" onclick="closeBackupModal()" class="text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-zinc-800 transition min-w-[40px] min-h-[40px]" aria-label="Cerrar copias de seguridad">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-3.5 space-y-2">
+                <div class="flex items-center gap-2 text-sm font-semibold text-zinc-100"><i class="fa-solid fa-shield-halved text-zinc-400"></i> Tus datos se guardan en este navegador</div>
+                <p class="text-xs leading-relaxed text-zinc-400">La aplicación no sincroniza automáticamente tus carpetas entre dispositivos. Descarga una copia JSON para conservar tus datos o trasladarlos a otro navegador.</p>
+            </div>
+            <div class="space-y-2">
+                <button type="button" id="backup-export-btn" onclick="exportBackup()" class="w-full min-h-[46px] bg-white hover:bg-zinc-200 text-zinc-950 font-semibold py-3 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-download"></i> Descargar copia de seguridad
+                </button>
+                <p class="text-xs text-zinc-500">Incluye prendas, enlaces, carpetas, outfits, sus relaciones y las portadas personalizadas.</p>
+            </div>
+            <div class="border-t border-zinc-800 pt-4 space-y-3">
+                <div>
+                    <h4 class="font-semibold text-sm">Restaurar una copia</h4>
+                    <p class="text-xs text-zinc-400 mt-1 leading-relaxed">Restaurar sustituye los datos actuales por los de la copia. Antes de hacerlo, la aplicación intentará descargar una copia de seguridad del estado actual como protección.</p>
+                </div>
+                <label for="backup-import-file" class="w-full min-h-[46px] cursor-pointer bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-semibold py-3 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 border border-zinc-700">
+                    <i class="fa-solid fa-file-arrow-up"></i> Seleccionar archivo de copia (.json)
+                </label>
+                <input id="backup-import-file" type="file" accept=".json,application/json" class="hidden" onchange="handleBackupFileSelection(event)">
+                <p class="text-xs text-amber-200/80"><i class="fa-solid fa-triangle-exclamation mr-1"></i> No cierres la página durante la restauración.</p>
+            </div>
+            <div id="backup-status" class="hidden rounded-xl border p-3 text-xs leading-relaxed" role="status" aria-live="polite"></div>
+            <div class="flex justify-end pt-1">
+                <button type="button" onclick="closeBackupModal()" class="min-h-[44px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-5 py-2.5 rounded-xl text-sm font-medium transition">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CONEXIÓN Y SINCRONIZACIÓN EN LA NUBE (VERSIÓN DE PRUEBA) -->
+    <div id="cloud-modal" class="fixed inset-0 z-[90] bg-black/85 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="cloud-modal-title">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 shadow-2xl space-y-5">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <h3 id="cloud-modal-title" class="text-lg font-bold tracking-tight">Mi Armario en la nube</h3>
+                    <p class="text-sm text-zinc-400 mt-1">Comparte el mismo armario entre Safari y la app de la pantalla de inicio.</p>
+                </div>
+                <button type="button" onclick="closeCloudModal()" class="text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-zinc-800 min-w-[40px] min-h-[40px]" aria-label="Cerrar nube"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div id="cloud-setup-panel" class="space-y-4">
+                <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-3.5 space-y-2">
+                    <div class="flex items-center gap-2 text-sm font-semibold"><i class="fa-solid fa-shield-halved text-zinc-400"></i> Tus datos, tu armario</div>
+                    <p class="text-xs leading-relaxed text-zinc-400">Esta versión de prueba guarda tus carpetas, prendas y outfits en Cloudflare para poder verlos desde Safari y desde la app instalada. Al crear el armario, los datos que ya hay en este navegador se copiarán a la nube. Haz primero una copia JSON si quieres conservar un respaldo.</p>
+                </div>
+                <div class="space-y-2">
+                    <h4 class="font-semibold text-sm">Crear un armario nuevo</h4>
+                    <p class="text-xs text-zinc-400">Turnstile ayuda a impedir que robots creen armarios automáticamente.</p>
+                    <div id="cloud-turnstile-widget" class="min-h-[65px]"></div>
+                    <button id="cloud-create-btn" type="button" disabled onclick="cloudCreateWorkspace()" class="w-full min-h-[46px] bg-white text-zinc-950 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-200 font-semibold py-3 px-4 rounded-xl text-sm transition"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>Crear armario y copiar mis datos</button>
+                </div>
+                <div class="border-t border-zinc-800 pt-4 space-y-2">
+                    <h4 class="font-semibold text-sm">Vincular este dispositivo a un armario existente</h4>
+                    <p class="text-xs text-zinc-400">En el dispositivo que ya tiene tu armario, genera un código temporal desde el menú Nube y escríbelo aquí.</p>
+                    <input id="cloud-pairing-code-input" type="text" inputmode="text" autocomplete="one-time-code" maxlength="24" placeholder="XXXX-XXXX-XXXX-XXXX" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm uppercase tracking-wider text-white focus:outline-none focus:border-zinc-500">
+                    <button type="button" onclick="cloudRedeemPairingCode()" class="w-full min-h-[44px] bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-100 font-semibold py-3 px-4 rounded-xl text-sm transition"><i class="fa-solid fa-link mr-2"></i>Vincular con código</button>
+                </div>
+                <div class="border-t border-zinc-800 pt-3">
+                    <button type="button" onclick="continueLocalOnly()" class="w-full min-h-[42px] text-sm text-zinc-300 underline underline-offset-4 hover:text-white">Ahora no, continuar solo en este navegador</button>
+                    <p class="text-[11px] text-zinc-500 mt-2">El modo local no sincroniza con otros dispositivos. Puedes configurar la nube más adelante desde este botón.</p>
+                </div>
+            </div>
+
+            <div id="cloud-connected-panel" class="hidden space-y-4">
+                <div id="cloud-connected-status" class="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm text-emerald-200" role="status" aria-live="polite">Armario conectado.</div>
+                <div class="space-y-2">
+                    <button type="button" onclick="cloudSyncNow(true)" class="w-full min-h-[46px] bg-white hover:bg-zinc-200 text-zinc-950 font-semibold py-3 px-4 rounded-xl text-sm"><i class="fa-solid fa-rotate mr-2"></i>Sincronizar ahora</button>
+                    <button type="button" onclick="cloudGeneratePairingCode()" class="w-full min-h-[46px] bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-100 font-semibold py-3 px-4 rounded-xl text-sm"><i class="fa-solid fa-mobile-screen-button mr-2"></i>Vincular otro dispositivo</button>
+                </div>
+                <div id="cloud-pairing-result" class="hidden bg-zinc-950 border border-zinc-700 rounded-2xl p-4 space-y-2">
+                    <p class="text-xs text-zinc-400">Introduce este código en el otro dispositivo. Solo sirve una vez y caduca en 10 minutos.</p>
+                    <p id="cloud-pairing-code-display" class="text-center text-lg sm:text-xl tracking-widest font-bold text-white select-all"></p>
+                    <button type="button" onclick="copyCloudPairingCode()" class="w-full min-h-[40px] bg-zinc-800 hover:bg-zinc-700 rounded-xl text-sm"><i class="fa-solid fa-copy mr-2"></i>Copiar código</button>
+                </div>
+                <p class="text-xs text-zinc-500">El servidor sincroniza carpetas, prendas y outfits. Conserva una copia JSON como respaldo.</p>
+            </div>
+
+            <div id="cloud-modal-status" class="hidden rounded-xl border border-zinc-700 bg-zinc-800/70 p-3 text-xs leading-relaxed text-zinc-200" role="status" aria-live="polite"></div>
+            <div class="flex justify-end pt-1"><button type="button" onclick="closeCloudModal()" class="min-h-[44px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-5 py-2.5 rounded-xl text-sm">Cerrar</button></div>
+        </div>
+    </div>
+
+    <!-- SCRIPT CORREGIDO CON EXTRACCIÓN REAL DE FOTO -->
+    <script>
+        let db;
+        let currentFolderId = null;
+        let currentOutfitId = null;
+        let currentMainSection = 'folders';
+        let activeEditingItem = null;
+        let activeItemSourceOutfitId = null;
+        let activeItemSourceFolderId = null;
+        let activeEditingOutfit = null;
+        let selectedOutfitCover = null;
+        let outfitEditorPreviewItems = [];
+        let outfitCoverSelectionToken = 0;
+        let activeEditingFolder = null;
+        let selectedFolderCover = null;
+        let automaticFolderCoverImage = null;
+        let folderCoverSelectionToken = 0;
+        let activeScrapeRequestId = 0;
+        let urlInputDebounce = null;
+
+        // La lógica JavaScript del navegador está integrada en este index.html.
+        // El Worker NO se puede incrustar aquí: debe ejecutarse en un servidor para consultar Vinted.
+        // Después de desplegar vinted-image-worker.js, pega aquí la URL real que te asigne Cloudflare.
+        const VINTED_METADATA_WORKER = 'https://vinted-image-worker.marcos2005murillo.workers.dev';
+        const BACKUP_FORMAT = 'mi-armario-digital-backup';
+        const BACKUP_FORMAT_VERSION = 1;
+        let backupRestoreInProgress = false;
+        // Sincronización remota en fase de prueba. El Worker de imágenes se mantiene independiente.
+        const CLOUD_API_BASE = 'https://mi-armario-api.marcos2005murillo.workers.dev';
+        const CLOUD_TURNSTILE_SITE_KEY = '0x4AAAAAAFmqsGYjVNtwU91x';
+        const CLOUD_TOKEN_KEY = 'miArmarioCloudAccessToken';
+        const CLOUD_WORKSPACE_KEY = 'miArmarioCloudWorkspaceId';
+        const CLOUD_REVISION_KEY = 'miArmarioCloudRevision';
+        const CLOUD_PENDING_KEY = 'miArmarioCloudPending';
+        const CLOUD_DISMISSED_KEY = 'miArmarioCloudSetupDismissed';
+        let cloudState = { token: null, workspaceId: null, revision: 0, connected: false, hydrating: false, pending: false, conflict: false, syncing: false };
+        let cloudTurnstileWidgetId = null;
+        let cloudTurnstileToken = '';
+        let cloudSyncTimer = null;
+        let cloudSyncChain = Promise.resolve();
+        let cloudMutationGeneration = 0;
+
+        function openBackupModal() {
+            const modal = document.getElementById('backup-modal');
+            modal.classList.remove('hidden');
+            setBackupStatus('', 'info');
+            document.getElementById('backup-import-file').value = '';
+            document.getElementById('backup-export-btn').focus();
+        }
+
+        function closeBackupModal() {
+            document.getElementById('backup-modal').classList.add('hidden');
+            document.getElementById('backup-import-file').value = '';
+        }
+
+        function setBackupStatus(message, type = 'info') {
+            const status = document.getElementById('backup-status');
+            status.textContent = message || '';
+            status.classList.toggle('hidden', !message);
+            status.className = 'rounded-xl border p-3 text-xs leading-relaxed';
+            if (!message) status.classList.add('hidden');
+            else if (type === 'error') status.classList.add('border-red-500/40', 'bg-red-500/10', 'text-red-200');
+            else if (type === 'success') status.classList.add('border-emerald-500/40', 'bg-emerald-500/10', 'text-emerald-200');
+            else status.classList.add('border-zinc-700', 'bg-zinc-800/70', 'text-zinc-200');
+        }
+
+        function readAllDatabaseStores() {
+            return new Promise((resolve, reject) => {
+                if (!db) return reject(new Error('La base de datos aún no está disponible. Recarga la página e inténtalo de nuevo.'));
+                let tx;
+                try { tx = db.transaction(['folders', 'items', 'outfits'], 'readonly'); }
+                catch (error) { reject(error); return; }
+                const result = { folders: null, items: null, outfits: null };
+                let failed = false;
+                for (const storeName of ['folders', 'items', 'outfits']) {
+                    const request = tx.objectStore(storeName).getAll();
+                    request.onsuccess = () => { result[storeName] = request.result || []; };
+                    request.onerror = () => { failed = true; reject(request.error || new Error('No se pudieron leer los datos.')); };
+                }
+                tx.oncomplete = () => {
+                    if (failed) return;
+                    for (const storeName of ['folders', 'items', 'outfits']) result[storeName] ||= [];
+                    resolve(result);
+                };
+                tx.onerror = () => { if (!failed) reject(tx.error || new Error('No se pudieron leer todos los datos.')); };
+                tx.onabort = () => { if (!failed) reject(tx.error || new Error('La lectura se ha cancelado.')); };
+            });
+        }
+
+        function buildBackupEnvelope(stores) {
+            return {
+                format: BACKUP_FORMAT,
+                formatVersion: BACKUP_FORMAT_VERSION,
+                app: 'Mi Armario Digital - Vinted',
+                database: 'VintedArmarioAppDB_v25',
+                exportedAt: new Date().toISOString(),
+                stores: {
+                    folders: stores.folders || [],
+                    items: stores.items || [],
+                    outfits: stores.outfits || []
+                }
+            };
+        }
+
+        function makeBackupFilename(prefix = 'mi-armario-backup') {
+            const now = new Date();
+            const stamp = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0'), '-', String(now.getHours()).padStart(2, '0'), String(now.getMinutes()).padStart(2, '0'), String(now.getSeconds()).padStart(2, '0')].join('');
+            return `${prefix}-${stamp}.json`;
+        }
+
+        function downloadBackupEnvelope(envelope, prefix = 'mi-armario-backup') {
+            const json = JSON.stringify(envelope, null, 2);
+            const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = makeBackupFilename(prefix);
+            anchor.style.display = 'none';
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+        }
+
+        async function exportBackup() {
+            const button = document.getElementById('backup-export-btn');
+            if (button.disabled) return;
+            button.disabled = true;
+            button.classList.add('opacity-60', 'cursor-wait');
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparando copia...';
+            try {
+                const stores = await readAllDatabaseStores();
+                downloadBackupEnvelope(buildBackupEnvelope(stores));
+                const itemCount = stores.items.length;
+                const folderCount = stores.folders.length;
+                const outfitCount = stores.outfits.length;
+                setBackupStatus(`Copia preparada: ${folderCount} carpetas, ${itemCount} prendas y ${outfitCount} outfits. Guarda el archivo JSON en un lugar seguro.`, 'success');
+            } catch (error) {
+                console.error('Error al exportar la copia de seguridad:', error);
+                setBackupStatus(error.message || 'No se pudo crear la copia de seguridad.', 'error');
+            } finally {
+                button.disabled = false;
+                button.classList.remove('opacity-60', 'cursor-wait');
+                button.innerHTML = '<i class="fa-solid fa-download"></i> Descargar copia de seguridad';
+            }
+        }
+
+        function validateBackupEnvelope(payload) {
+            if (!payload || typeof payload !== 'object' || payload.format !== BACKUP_FORMAT || payload.formatVersion !== BACKUP_FORMAT_VERSION) {
+                throw new Error('El archivo no parece una copia de seguridad válida de Mi Armario Digital o su versión no es compatible. No se ha cambiado ningún dato.');
+            }
+            const rawStores = payload.stores;
+            if (!rawStores || !Array.isArray(rawStores.folders) || !Array.isArray(rawStores.items)) {
+                throw new Error('La copia no contiene listas válidas de carpetas y prendas. No se ha cambiado ningún dato.');
+            }
+            const folders = rawStores.folders;
+            const items = rawStores.items;
+            const outfits = Array.isArray(rawStores.outfits) ? rawStores.outfits : [];
+            const assertUniqueIds = (records, label) => {
+                const ids = new Set();
+                records.forEach((record, index) => {
+                    if (!record || typeof record !== 'object' || !Number.isSafeInteger(Number(record.id)) || Number(record.id) <= 0) {
+                        throw new Error(`La copia contiene un identificador inválido en ${label} (registro ${index + 1}). No se ha cambiado ningún dato.`);
+                    }
+                    const id = Number(record.id);
+                    if (ids.has(id)) throw new Error(`La copia contiene identificadores duplicados en ${label}. No se ha cambiado ningún dato.`);
+                    ids.add(id);
+                });
+                return ids;
+            };
+            const folderIds = assertUniqueIds(folders, 'carpetas');
+            const itemIds = assertUniqueIds(items, 'prendas');
+            assertUniqueIds(outfits, 'outfits');
+            const safeHttpsOrJpeg = (value, label, optional = false) => {
+                if ((value === null || value === undefined || value === '') && optional) return;
+                if (typeof value !== 'string') throw new Error(`Hay una imagen o un enlace inválido en ${label}. No se ha cambiado ningún dato.`);
+                if (/^data:image\/jpeg;base64,[a-z0-9+/]+=*$/i.test(value)) return;
+                try {
+                    const url = new URL(value);
+                    if (url.protocol === 'https:') return;
+                } catch (_) {}
+                throw new Error(`Hay una imagen o un enlace no compatible en ${label}. No se ha cambiado ningún dato.`);
+            };
+            folders.forEach(folder => {
+                if (typeof folder.name !== 'string' || !folder.name.trim()) throw new Error('La copia contiene una carpeta sin nombre. No se ha cambiado ningún dato.');
+                if (folder.coverImage !== undefined && folder.coverImage !== null) safeHttpsOrJpeg(folder.coverImage, 'portada de carpeta', true);
+            });
+            items.forEach(item => {
+                if (!folderIds.has(Number(item.folderId))) throw new Error(`La prenda «${String(item.title || item.id)}» apunta a una carpeta que no existe en la copia. No se ha cambiado ningún dato.`);
+                if (typeof item.title !== 'string' || typeof item.url !== 'string' || typeof item.image !== 'string') throw new Error('La copia contiene una prenda incompleta. No se ha cambiado ningún dato.');
+                if (!isVintedListingUrl(item.url)) throw new Error(`El enlace guardado para «${String(item.title || item.id)}» no parece un anuncio válido de Vinted. No se ha cambiado ningún dato.`);
+                safeHttpsOrJpeg(item.image, 'imagen de prenda');
+            });
+            outfits.forEach(outfit => {
+                if (typeof outfit.name !== 'string' || !outfit.name.trim()) throw new Error('La copia contiene un outfit sin nombre. No se ha cambiado ningún dato.');
+                if (outfit.coverImage !== undefined && outfit.coverImage !== null) {
+                    if (typeof outfit.coverImage !== 'string' || !/^data:image\/jpeg;base64,[a-z0-9+/]+=*$/i.test(outfit.coverImage)) {
+                        throw new Error('La copia contiene una portada de outfit no compatible. No se ha cambiado ningún dato.');
+                    }
+                }
+                if (outfit.itemIds !== undefined && !Array.isArray(outfit.itemIds)) throw new Error('La copia contiene una lista de prendas inválida en un outfit. No se ha cambiado ningún dato.');
+                const refs = (Array.isArray(outfit.itemIds) ? outfit.itemIds : []).map(Number);
+                if (refs.some(id => !Number.isSafeInteger(id) || !itemIds.has(id))) throw new Error(`El outfit «${outfit.name}» referencia una prenda que no existe en la copia. No se ha cambiado ningún dato.`);
+            });
+            return {
+                folders: folders.map(folder => ({ ...folder, id: Number(folder.id) })),
+                items: items.map(item => ({ ...item, id: Number(item.id), folderId: Number(item.folderId) })),
+                outfits: outfits.map(outfit => ({ ...outfit, id: Number(outfit.id), itemIds: [...new Set((Array.isArray(outfit.itemIds) ? outfit.itemIds : []).map(Number))] }))
+            };
+        }
+
+        function replaceDatabaseStores(stores) {
+            return new Promise((resolve, reject) => {
+                let tx;
+                try { tx = db.transaction(['folders', 'items', 'outfits'], 'readwrite'); }
+                catch (error) { reject(error); return; }
+                const names = ['folders', 'items', 'outfits'];
+                names.forEach(name => {
+                    const store = tx.objectStore(name);
+                    store.clear();
+                    (stores[name] || []).forEach(record => store.put(record));
+                });
+                tx.oncomplete = () => {
+                    if (cloudState.connected && !cloudState.hydrating) scheduleCloudSync();
+                    resolve();
+                };
+                tx.onerror = () => reject(tx.error || new Error('La base de datos rechazó la restauración.'));
+                tx.onabort = () => reject(tx.error || new Error('La restauración se canceló.'));
+            });
+        }
+
+        async function handleBackupFileSelection(event) {
+            if (backupRestoreInProgress) return;
+            const input = event.target;
+            const file = input.files && input.files[0];
+            if (!file) return;
+            input.value = '';
+            if (file.size > 100 * 1024 * 1024) {
+                setBackupStatus('El archivo supera los 100 MB. Selecciona una copia más pequeña.', 'error');
+                return;
+            }
+            try {
+                const text = await file.text();
+                const payload = JSON.parse(text);
+                const validated = validateBackupEnvelope(payload);
+                const summary = `${validated.folders.length} carpetas, ${validated.items.length} prendas y ${validated.outfits.length} outfits`;
+                const accepted = confirm(`Vas a restaurar una copia con ${summary}.
+
+Esto sustituirá todos los datos que hay ahora en este navegador. Antes se intentará descargar una copia de seguridad del estado actual.
+
+¿Quieres continuar?`);
+                if (!accepted) {
+                    setBackupStatus('Restauración cancelada. Los datos actuales no se han modificado.', 'info');
+                    return;
+                }
+                backupRestoreInProgress = true;
+                input.disabled = true;
+                document.getElementById('backup-export-btn').disabled = true;
+                try {
+                    setBackupStatus('Preparando una copia de seguridad del estado actual antes de restaurar...', 'info');
+                    const currentStores = await readAllDatabaseStores();
+                    downloadBackupEnvelope(buildBackupEnvelope(currentStores), 'mi-armario-antes-de-restaurar');
+                    await replaceDatabaseStores(validated);
+                    setBackupStatus(`Copia restaurada correctamente: ${summary}. Se ha iniciado la descarga preventiva de los datos anteriores; comprueba que se haya guardado el archivo.`, 'success');
+                    // La restauración vuelve al inicio y cierra cualquier modal que pudiera quedar debajo de este.
+                    activeScrapeRequestId++;
+                    closeAddModal();
+                    closeNewFolderModal();
+                    closeEditFolderModal();
+                    closeOutfitEditorModal();
+                    closeAddItemsToOutfitModal();
+                    closeItemDetailModal();
+                    showMainSection('folders');
+                } catch (writeError) {
+                    console.error('No se pudo completar la restauración:', writeError);
+                    setBackupStatus(writeError.message || 'No se pudo restaurar la copia. La transacción no se completó; vuelve a cargar la página y comprueba los datos. Conserva el archivo de copia de seguridad.', 'error');
+                } finally {
+                    backupRestoreInProgress = false;
+                    input.disabled = false;
+                    document.getElementById('backup-export-btn').disabled = false;
+                }
+            } catch (error) {
+                console.error('Error al restaurar copia:', error);
+                setBackupStatus(error instanceof SyntaxError ? 'El archivo no contiene JSON válido. No se ha cambiado ningún dato.' : (error.message || 'No se pudo leer la copia. No se ha cambiado ningún dato.'), 'error');
+            }
+        }
+
+        function updateBackButtonLabel() {
+            const button = document.getElementById('back-btn');
+            const destination = currentMainSection === 'outfits' ? 'Outfits' : 'Carpetas';
+            button.setAttribute('aria-label', `Volver a ${destination}`);
+            button.title = `Volver a ${destination}`;
+        }
+
+        function initAppDatabase() {
+            const request = indexedDB.open('VintedArmarioAppDB_v25', 2);
+
+            request.onerror = (e) => console.error("Error DB:", e);
+
+            request.onupgradeneeded = (event) => {
+                const dbRef = event.target.result;
+                if (!dbRef.objectStoreNames.contains('folders')) {
+                    dbRef.createObjectStore('folders', { keyPath: 'id', autoIncrement: true });
+                }
+                if (!dbRef.objectStoreNames.contains('items')) {
+                    const itemStore = dbRef.createObjectStore('items', { keyPath: 'id', autoIncrement: true });
+                    itemStore.createIndex('folderId', 'folderId', { unique: false });
+                }
+                // Nueva tienda independiente: los outfits guardan IDs de prendas existentes.
+                // Actualizar la versión añade esta tienda sin borrar carpetas ni prendas.
+                if (!dbRef.objectStoreNames.contains('outfits')) {
+                    dbRef.createObjectStore('outfits', { keyPath: 'id', autoIncrement: true });
+                }
+            };
+
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                ensureDefaultFolders();
+            };
+        }
+
+        function ensureDefaultFolders() {
+            const tx = db.transaction('folders', 'readwrite');
+            const store = tx.objectStore('folders');
+            const req = store.getAll();
+            req.onsuccess = () => {
+                const folders = req.result;
+                // Solo para instalaciones vacías. Las carpetas existentes nunca se renombran ni eliminan automáticamente.
+                if (!folders || folders.length === 0) {
+                    store.add({ name: 'Todos', createdAt: Date.now() });
+                }
+            };
+            tx.oncomplete = () => initializeCloudConnection();
+            tx.onerror = () => {
+                console.error('No se pudieron preparar las carpetas locales.');
+                initializeCloudConnection();
+            };
+        }
+
+        function checkUrlParamsAndLoad() {
+            setCollectionTabState('folders');
+            updateHeaderActions('folders', false);
+            loadFoldersView();
+
+            const params = new URLSearchParams(window.location.search);
+            const rawShare = params.get('importar') || params.get('url') || params.get('text');
+            const shareTitle = params.get('title');
+
+            if (rawShare) {
+                const shareUrl = extractFirstUrl(rawShare);
+                if (shareUrl) {
+                    openAddModal(shareUrl, shareTitle || '');
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }
+        }
+
+        function extractFirstUrl(text) {
+            const match = text.match(/(https?:\/\/[^\s]+)/g);
+            return match ? match[0] : text;
+        }
+
+        function setCollectionTabState(section) {
+            const foldersTab = document.getElementById('folders-tab');
+            const outfitsTab = document.getElementById('outfits-tab');
+            const base = 'inline-flex items-center flex-1 sm:flex-none justify-center min-h-[44px] px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition';
+            const active = `${base} bg-white text-zinc-950 shadow-sm`;
+            const inactive = `${base} text-zinc-300 hover:bg-zinc-800`;
+            foldersTab.className = section === 'folders' ? active : inactive;
+            outfitsTab.className = section === 'outfits' ? active : inactive;
+            foldersTab.setAttribute('aria-selected', section === 'folders' ? 'true' : 'false');
+            outfitsTab.setAttribute('aria-selected', section === 'outfits' ? 'true' : 'false');
+        }
+
+        function updateHeaderActions(section, isDetail = false) {
+            const folderButton = document.getElementById('new-folder-btn');
+            const outfitButton = document.getElementById('new-outfit-btn');
+            folderButton.classList.toggle('hidden', section !== 'folders' || isDetail);
+            outfitButton.classList.toggle('hidden', section !== 'outfits' || isDetail);
+            folderButton.setAttribute('aria-label', 'Crear carpeta');
+            outfitButton.setAttribute('aria-label', 'Crear outfit');
+        }
+
+        function showMainSection(section = 'folders') {
+            currentMainSection = section === 'outfits' ? 'outfits' : 'folders';
+            currentFolderId = null;
+            currentOutfitId = null;
+            document.getElementById('back-btn').classList.add('hidden');
+            document.getElementById('app-title').innerHTML = `<i class="fa-solid fa-shirt text-zinc-400" aria-hidden="true"></i> Mi Armario`;
+            document.getElementById('collection-tabs').classList.remove('hidden');
+            document.getElementById('folders-view').classList.toggle('hidden', currentMainSection !== 'folders');
+            document.getElementById('outfits-view').classList.toggle('hidden', currentMainSection !== 'outfits');
+            document.getElementById('folder-detail-view').classList.add('hidden');
+            document.getElementById('outfit-detail-view').classList.add('hidden');
+            updateHeaderActions(currentMainSection, false);
+            setCollectionTabState(currentMainSection);
+            if (currentMainSection === 'folders') loadFoldersView();
+            else loadOutfitsView();
+        }
+
+        function goHome() {
+            // El botón de volver regresa a la sección que originó el detalle.
+            showMainSection(currentMainSection || 'folders');
+        }
+
+        function openFolder(folderId, folderName) {
+            currentMainSection = 'folders';
+            currentFolderId = Number(folderId);
+            currentOutfitId = null;
+            document.getElementById('back-btn').classList.remove('hidden');
+            updateBackButtonLabel();
+            document.getElementById('app-title').textContent = folderName;
+            document.getElementById('collection-tabs').classList.add('hidden');
+            document.getElementById('folders-view').classList.add('hidden');
+            document.getElementById('outfits-view').classList.add('hidden');
+            document.getElementById('outfit-detail-view').classList.add('hidden');
+            document.getElementById('folder-detail-view').classList.remove('hidden');
+            updateHeaderActions('folders', true);
+            loadFolderItems(currentFolderId, folderName);
+        }
+
+        function openOutfit(outfitId, outfitName) {
+            currentMainSection = 'outfits';
+            currentFolderId = null;
+            currentOutfitId = Number(outfitId);
+            document.getElementById('back-btn').classList.remove('hidden');
+            updateBackButtonLabel();
+            document.getElementById('app-title').textContent = outfitName || 'Outfit';
+            document.getElementById('collection-tabs').classList.add('hidden');
+            document.getElementById('folders-view').classList.add('hidden');
+            document.getElementById('folder-detail-view').classList.add('hidden');
+            document.getElementById('outfits-view').classList.add('hidden');
+            document.getElementById('outfit-detail-view').classList.remove('hidden');
+            updateHeaderActions('outfits', true);
+            loadOutfitItems(currentOutfitId);
+        }
+
+        function closeAllCollectionMenus() {
+            document.querySelectorAll('.collection-card-menu').forEach(menu => menu.classList.add('hidden'));
+            document.querySelectorAll('[data-collection-menu-trigger]').forEach(button => button.setAttribute('aria-expanded', 'false'));
+        }
+
+        function toggleCollectionMenu(event, type, id) {
+            if (event) event.stopPropagation();
+            const menu = document.getElementById(`collection-menu-${type}-${Number(id)}`);
+            if (!menu) return;
+            const wasOpen = !menu.classList.contains('hidden');
+            closeAllCollectionMenus();
+            if (!wasOpen) {
+                menu.classList.remove('hidden');
+                const trigger = document.querySelector(`[data-collection-menu-trigger="${type}-${Number(id)}"]`);
+                if (trigger) trigger.setAttribute('aria-expanded', 'true');
+            }
+        }
+
+        function closeCollectionMenu(type, id) {
+            const menu = document.getElementById(`collection-menu-${type}-${Number(id)}`);
+            if (menu) menu.classList.add('hidden');
+            const trigger = document.querySelector(`[data-collection-menu-trigger="${type}-${Number(id)}"]`);
+            if (trigger) trigger.setAttribute('aria-expanded', 'false');
+        }
+
+        document.addEventListener('click', event => {
+            if (!event.target.closest('.collection-card-menu') && !event.target.closest('[data-collection-menu-trigger]')) closeAllCollectionMenus();
+        });
+
+        function loadFoldersView() {
+            if (!db) return;
+            const tx = db.transaction(['folders', 'items'], 'readonly');
+            const folderStore = tx.objectStore('folders');
+            const itemStore = tx.objectStore('items');
+            const index = itemStore.index('folderId');
+
+            const foldersReq = folderStore.getAll();
+            foldersReq.onsuccess = () => {
+                const folders = foldersReq.result || [];
+                const grid = document.getElementById('folders-grid');
+                document.getElementById('folders-count').textContent = `${folders.length} ${folders.length === 1 ? 'carpeta' : 'carpetas'}`;
+                grid.innerHTML = '';
+
+                if (folders.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full text-center py-12 text-zinc-500 text-sm">No hay carpetas creadas.</div>`;
+                    return;
+                }
+
+                folders.forEach(folder => {
+                    const itemReq = index.getAll(folder.id);
+                    itemReq.onsuccess = () => {
+                        const items = itemReq.result || [];
+                        // Prioridad: portada personalizada; si no existe, usar la última prenda añadida.
+                        const coverImg = isUsableFolderCover(folder.coverImage)
+                            ? folder.coverImage
+                            : (items.length > 0 ? items[items.length - 1].image : null);
+                        const initial = String(folder.name || '?').charAt(0).toUpperCase();
+
+                        const card = document.createElement('div');
+                        card.className = "group bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col";
+                        card.onclick = () => openFolder(folder.id, folder.name);
+
+                        let coverHTML = '';
+                        if (coverImg && (coverImg.startsWith('http') || coverImg.startsWith('data:image/jpeg;base64,'))) {
+                            coverHTML = `<img src="${escapeHtml(coverImg)}" class="w-full h-44 sm:h-52 object-cover group-hover:scale-105 transition duration-500" alt="Portada de carpeta" loading="lazy">`;
+                        } else {
+                            coverHTML = `<div class="w-full h-44 sm:h-52 bg-zinc-800 flex items-center justify-center text-zinc-500 font-bold text-4xl group-hover:scale-105 transition duration-500">${escapeHtml(initial)}</div>`;
+                        }
+
+                        card.innerHTML = `
+                            <div class="relative overflow-hidden bg-zinc-950">${coverHTML}
+                                <button type="button" data-collection-menu-trigger="folder-${Number(folder.id)}" aria-label="Acciones de ${escapeHtml(folder.name || 'carpeta')}" aria-haspopup="menu" aria-expanded="false" onclick="event.stopPropagation(); toggleCollectionMenu(event, 'folder', ${Number(folder.id)})" class="absolute top-2 right-2 z-10 w-10 h-10 rounded-xl bg-zinc-950/90 border border-zinc-700/80 text-white hover:bg-zinc-800 flex items-center justify-center shadow-lg backdrop-blur" title="Acciones de carpeta"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                                <div id="collection-menu-folder-${Number(folder.id)}" class="collection-card-menu hidden absolute top-12 right-2 z-20 min-w-40 bg-zinc-900 border border-zinc-700 rounded-xl p-1.5 shadow-2xl" role="menu" onclick="event.stopPropagation()">
+                                    <button type="button" role="menuitem" onclick="event.stopPropagation(); closeCollectionMenu('folder', ${Number(folder.id)}); openEditFolderModal(${Number(folder.id)})" class="w-full text-left px-3 py-2.5 text-sm text-zinc-100 hover:bg-zinc-800 rounded-lg flex items-center gap-2"><i class="fa-solid fa-pen w-4 text-zinc-400"></i>Editar carpeta</button>
+                                    <button type="button" role="menuitem" onclick="event.stopPropagation(); closeCollectionMenu('folder', ${Number(folder.id)}); deleteFolderById(${Number(folder.id)}, false)" class="w-full text-left px-3 py-2.5 text-sm text-red-300 hover:bg-red-500/10 rounded-lg flex items-center gap-2"><i class="fa-solid fa-trash-can w-4"></i>Eliminar</button>
+                                </div>
+                            </div>
+                            <div class="p-4 flex items-center justify-between bg-zinc-900">
+                                <div>
+                                    <h3 class="font-bold text-sm sm:text-base text-white tracking-tight">${escapeHtml(folder.name || 'Carpeta')}</h3>
+                                    <p class="text-xs text-zinc-400 mt-0.5">${items.length} ${items.length === 1 ? 'prenda' : 'prendas'}</p>
+                                </div>
+                                <div class="w-8 h-8 rounded-full bg-zinc-800/80 flex items-center justify-center text-zinc-400 group-hover:bg-white group-hover:text-zinc-950 transition">
+                                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                                </div>
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    };
+                });
+            };
+        }
+
+        function loadFolderItems(folderId, folderName) {
+            const tx = db.transaction('items', 'readonly');
+            const store = tx.objectStore('items');
+            const index = store.index('folderId');
+            const req = index.getAll(folderId);
+
+            req.onsuccess = () => {
+                const items = req.result || [];
+                const grid = document.getElementById('items-grid');
+                document.getElementById('current-folder-name').textContent = folderName;
+                document.getElementById('current-folder-count').textContent = `${items.length} ${items.length === 1 ? 'prenda guardada' : 'prendas guardadas'}`;
+                grid.innerHTML = '';
+
+                if (items.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-span-full text-center py-16 space-y-3">
+                            <div class="w-12 h-12 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center mx-auto text-zinc-500 text-lg">
+                                <i class="fa-solid fa-shirt"></i>
+                            </div>
+                            <p class="text-zinc-400 text-sm">Esta carpeta está vacía.</p>
+                        </div>`;
+                    return;
+                }
+
+                items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = "group bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col";
+                    card.onclick = () => openItemDetailModal(item);
+
+                    card.innerHTML = `
+                        <div class="relative overflow-hidden bg-zinc-950 h-48 sm:h-60">
+                            <img src="${escapeHtml(item.image || '')}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="${escapeHtml(item.title || 'Prenda')}" loading="lazy">
+                        </div>
+                        <div class="p-4 bg-zinc-950 flex flex-col justify-between flex-1">
+                            <h4 class="font-medium text-xs sm:text-sm text-zinc-200 line-clamp-2 leading-snug">${escapeHtml(item.title || 'Prenda')}</h4>
+                            <div class="mt-3 pt-3 border-t border-zinc-900 flex items-center justify-between text-xs text-zinc-500">
+                                <span>Ver detalles</span>
+                                <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-1 transition text-zinc-400"></i>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            };
+        }
+
+        function isUsableOutfitCover(value) {
+            return typeof value === 'string' && /^data:image\/jpeg;base64,[a-z0-9+/]+=*$/i.test(value);
+        }
+
+        function getOutfitItems(outfit, allItems) {
+            const itemIds = Array.isArray(outfit && outfit.itemIds) ? outfit.itemIds : [];
+            const byId = new Map((allItems || []).map(item => [String(item.id), item]));
+            return itemIds.map(id => byId.get(String(id))).filter(Boolean);
+        }
+
+        function renderOutfitCoverMarkup(outfit, outfitItems, heightClass = 'h-44 sm:h-52') {
+            if (isUsableOutfitCover(outfit && outfit.coverImage)) {
+                return `<img src="${escapeHtml(outfit.coverImage)}" class="w-full h-full object-cover" alt="Portada de ${escapeHtml(outfit.name || 'outfit')}">`;
+            }
+            const items = Array.isArray(outfitItems) ? outfitItems.slice(0, 4) : [];
+            if (items.length === 0) {
+                const initial = escapeHtml(String(outfit && outfit.name || 'O').trim().charAt(0).toUpperCase() || 'O');
+                return `<div class="w-full h-full bg-zinc-800 flex flex-col items-center justify-center text-zinc-500 gap-2"><i class="fa-solid fa-layer-group text-3xl"></i><span class="font-bold text-3xl">${initial}</span><span class="text-[10px] uppercase tracking-widest">Outfit vacío</span></div>`;
+            }
+            if (items.length === 1) {
+                const item = items[0];
+                return `<img src="${escapeHtml(item.image || '')}" class="w-full h-full object-cover" alt="${escapeHtml(item.title || 'Prenda del outfit')}" loading="lazy">`;
+            }
+            const layoutClass = items.length === 2 ? 'grid-cols-2 grid-rows-1' : 'grid-cols-2 grid-rows-2';
+            const tiles = items.map(item => `<div class="min-w-0 min-h-0 overflow-hidden bg-zinc-800"><img src="${escapeHtml(item.image || '')}" class="w-full h-full object-cover" alt="${escapeHtml(item.title || 'Prenda del outfit')}" loading="lazy"></div>`);
+            while (tiles.length < (items.length === 2 ? 2 : 4)) {
+                tiles.push('<div class="bg-zinc-800/80 flex items-center justify-center text-zinc-600"><i class="fa-solid fa-shirt"></i></div>');
+            }
+            return `<div class="grid ${layoutClass} gap-[2px] w-full h-full bg-zinc-950">${tiles.join('')}</div>`;
+        }
+
+        function loadOutfitsView() {
+            if (!db) return;
+            const tx = db.transaction(['outfits', 'items'], 'readonly');
+            const outfitsReq = tx.objectStore('outfits').getAll();
+            const itemsReq = tx.objectStore('items').getAll();
+            let outfits = null;
+            let allItems = null;
+            const render = () => {
+                if (!outfits || !allItems) return;
+                const grid = document.getElementById('outfits-grid');
+                document.getElementById('outfits-count').textContent = `${outfits.length} ${outfits.length === 1 ? 'outfit' : 'outfits'}`;
+                grid.innerHTML = '';
+                if (outfits.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full text-center py-16 space-y-3"><div class="w-14 h-14 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center mx-auto text-zinc-500 text-xl"><i class="fa-solid fa-layer-group"></i></div><p class="text-zinc-300 text-sm font-medium">Todavía no tienes outfits.</p><p class="text-zinc-500 text-sm">Crea uno y combina prendas que ya hayas guardado en tus carpetas.</p><button type="button" onclick="openNewOutfitModal()" class="mt-2 bg-white text-zinc-950 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-zinc-200">Crear mi primer outfit</button></div>`;
+                    return;
+                }
+                outfits.sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+                outfits.forEach(outfit => {
+                    const outfitItems = getOutfitItems(outfit, allItems);
+                    const card = document.createElement('div');
+                    card.className = 'group bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col';
+                    const coverHTML = renderOutfitCoverMarkup(outfit, outfitItems);
+                    const name = escapeHtml(outfit.name || 'Outfit sin nombre');
+                    const countLabel = `${outfitItems.length} ${outfitItems.length === 1 ? 'prenda' : 'prendas'}`;
+                    card.innerHTML = `<div class="relative overflow-hidden bg-zinc-950 h-44 sm:h-52 group-hover:scale-[1.01] transition duration-300">${coverHTML}<span class="absolute bottom-2 right-2 bg-zinc-950/80 border border-zinc-700/80 rounded-lg px-2 py-1 text-[10px] text-zinc-200 backdrop-blur">${outfitItems.length} ${outfitItems.length === 1 ? 'prenda' : 'prendas'}</span><button type="button" data-collection-menu-trigger="outfit-${Number(outfit.id)}" aria-label="Acciones de ${name}" aria-haspopup="menu" aria-expanded="false" onclick="event.stopPropagation(); toggleCollectionMenu(event, 'outfit', ${Number(outfit.id)})" class="absolute top-2 right-2 z-10 w-10 h-10 rounded-xl bg-zinc-950/90 border border-zinc-700/80 text-white hover:bg-zinc-800 flex items-center justify-center shadow-lg backdrop-blur" title="Acciones del outfit"><i class="fa-solid fa-ellipsis-vertical"></i></button><div id="collection-menu-outfit-${Number(outfit.id)}" class="collection-card-menu hidden absolute top-12 right-2 z-20 min-w-40 bg-zinc-900 border border-zinc-700 rounded-xl p-1.5 shadow-2xl" role="menu" onclick="event.stopPropagation()"><button type="button" role="menuitem" onclick="event.stopPropagation(); closeCollectionMenu('outfit', ${Number(outfit.id)}); openEditOutfitModal(${Number(outfit.id)})" class="w-full text-left px-3 py-2.5 text-sm text-zinc-100 hover:bg-zinc-800 rounded-lg flex items-center gap-2"><i class="fa-solid fa-pen w-4 text-zinc-400"></i>Editar outfit</button><button type="button" role="menuitem" onclick="event.stopPropagation(); closeCollectionMenu('outfit', ${Number(outfit.id)}); deleteOutfitById(${Number(outfit.id)}, false)" class="w-full text-left px-3 py-2.5 text-sm text-red-300 hover:bg-red-500/10 rounded-lg flex items-center gap-2"><i class="fa-solid fa-trash-can w-4"></i>Eliminar</button></div></div><div class="p-4 flex items-center justify-between bg-zinc-900 gap-2"><div class="min-w-0"><h3 class="font-bold text-sm sm:text-base text-white tracking-tight truncate">${name}</h3><p class="text-xs text-zinc-400 mt-0.5">${countLabel}</p></div><div class="w-8 h-8 rounded-full shrink-0 bg-zinc-800/80 flex items-center justify-center text-zinc-400 group-hover:bg-white group-hover:text-zinc-950 transition"><i class="fa-solid fa-chevron-right text-xs"></i></div></div>`;
+                    card.onclick = () => openOutfit(outfit.id, outfit.name || 'Outfit');
+                    grid.appendChild(card);
+                });
+            };
+            outfitsReq.onsuccess = () => { outfits = outfitsReq.result || []; render(); };
+            itemsReq.onsuccess = () => { allItems = itemsReq.result || []; render(); };
+            outfitsReq.onerror = itemsReq.onerror = () => console.error('No se pudieron cargar los outfits.');
+        }
+
+        function loadOutfitItems(outfitId) {
+            if (!db || !outfitId) return;
+            const tx = db.transaction(['outfits', 'items'], 'readonly');
+            const outfitReq = tx.objectStore('outfits').get(Number(outfitId));
+            const itemsReq = tx.objectStore('items').getAll();
+            let outfit = null;
+            let allItems = null;
+            let outfitReady = false;
+            let itemsReady = false;
+            const render = () => {
+                if (!outfitReady || !itemsReady) return;
+                if (!outfit) {
+                    alert('No se ha encontrado este outfit. Vuelve a la sección de outfits.');
+                    showMainSection('outfits');
+                    return;
+                }
+                const items = getOutfitItems(outfit, allItems);
+                document.getElementById('current-outfit-name').textContent = outfit.name || 'Outfit';
+                document.getElementById('current-outfit-count').textContent = `${items.length} ${items.length === 1 ? 'prenda guardada' : 'prendas guardadas'}`;
+                const grid = document.getElementById('outfit-items-grid');
+                grid.innerHTML = '';
+                if (items.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full text-center py-16 space-y-3"><div class="w-12 h-12 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center mx-auto text-zinc-500 text-lg"><i class="fa-solid fa-shirt"></i></div><p class="text-zinc-400 text-sm">Este outfit todavía está vacío.</p><p class="text-zinc-500 text-xs">Añade prendas existentes desde tus carpetas, sin duplicarlas.</p><button type="button" onclick="openAddItemsToOutfitModal()" class="bg-white text-zinc-950 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-zinc-200">Añadir prendas</button></div>`;
+                    return;
+                }
+                items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'group bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 rounded-3xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col';
+                    card.innerHTML = `<button type="button" class="block w-full text-left" data-open-item="${Number(item.id)}"><div class="relative overflow-hidden bg-zinc-950 h-48 sm:h-60"><img src="${escapeHtml(item.image || '')}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="${escapeHtml(item.title || 'Prenda')}" loading="lazy"></div><div class="p-4 bg-zinc-950"><h4 class="font-medium text-xs sm:text-sm text-zinc-200 line-clamp-2 leading-snug">${escapeHtml(item.title || 'Prenda')}</h4></div></button><div class="px-4 pb-4 bg-zinc-950 flex items-center justify-between gap-2 border-t border-zinc-900 pt-3"><span class="text-xs text-zinc-500">En este outfit</span><button type="button" data-remove-item="${Number(item.id)}" class="text-xs text-amber-300 hover:text-amber-200 px-2 py-1.5 rounded-lg hover:bg-amber-500/10 transition"><i class="fa-solid fa-link-slash mr-1"></i>Quitar</button></div>`;
+                    card.querySelector('[data-open-item]').addEventListener('click', () => openItemDetailModal(item, Number(outfitId)));
+                    card.querySelector('[data-remove-item]').addEventListener('click', () => removeItemFromOutfit(Number(item.id), Number(outfitId)));
+                    grid.appendChild(card);
+                });
+            };
+            outfitReq.onsuccess = () => { outfit = outfitReq.result || null; outfitReady = true; render(); };
+            itemsReq.onsuccess = () => { allItems = itemsReq.result || []; itemsReady = true; render(); };
+            outfitReq.onerror = itemsReq.onerror = () => alert('No se pudieron cargar las prendas del outfit.');
+        }
+
+        function openNewOutfitModal() {
+            activeEditingOutfit = null;
+            selectedOutfitCover = null;
+            outfitEditorPreviewItems = [];
+            outfitCoverSelectionToken++;
+            document.getElementById('outfit-editor-title').textContent = 'Nuevo outfit';
+            document.getElementById('edit-outfit-id').value = '';
+            document.getElementById('edit-outfit-name').value = '';
+            document.getElementById('edit-outfit-cover-file').value = '';
+            document.getElementById('save-outfit-btn').disabled = false;
+            document.getElementById('save-outfit-btn').textContent = 'Crear outfit';
+            updateOutfitCoverPreview();
+            document.getElementById('outfit-editor-modal').classList.remove('hidden');
+            document.getElementById('edit-outfit-name').focus();
+        }
+
+        function openEditOutfitModal(outfitId) {
+            if (!db || !outfitId) return;
+            const tx = db.transaction(['outfits', 'items'], 'readonly');
+            const outfitReq = tx.objectStore('outfits').get(Number(outfitId));
+            const itemsReq = tx.objectStore('items').getAll();
+            let outfit = null;
+            let allItems = null;
+            let outfitReady = false;
+            let itemsReady = false;
+            const show = () => {
+                if (!outfitReady || !itemsReady) return;
+                if (!outfit) {
+                    alert('No se ha encontrado el outfit que quieres editar.');
+                    return;
+                }
+                activeEditingOutfit = outfit;
+                selectedOutfitCover = isUsableOutfitCover(outfit.coverImage) ? outfit.coverImage : null;
+                outfitEditorPreviewItems = getOutfitItems(outfit, allItems);
+                outfitCoverSelectionToken++;
+                document.getElementById('outfit-editor-title').textContent = 'Editar outfit';
+                document.getElementById('edit-outfit-id').value = outfit.id;
+                document.getElementById('edit-outfit-name').value = outfit.name || '';
+                document.getElementById('edit-outfit-cover-file').value = '';
+                document.getElementById('save-outfit-btn').disabled = false;
+                document.getElementById('save-outfit-btn').textContent = 'Guardar cambios';
+                updateOutfitCoverPreview();
+                document.getElementById('outfit-editor-modal').classList.remove('hidden');
+                document.getElementById('edit-outfit-name').focus();
+            };
+            outfitReq.onsuccess = () => { outfit = outfitReq.result || null; outfitReady = true; show(); };
+            itemsReq.onsuccess = () => { allItems = itemsReq.result || []; itemsReady = true; show(); };
+            outfitReq.onerror = itemsReq.onerror = () => alert('No se pudieron cargar los datos del outfit.');
+        }
+
+        function closeOutfitEditorModal() {
+            outfitCoverSelectionToken++;
+            document.getElementById('outfit-editor-modal').classList.add('hidden');
+            document.getElementById('edit-outfit-cover-file').value = '';
+            document.getElementById('save-outfit-btn').disabled = false;
+            document.getElementById('save-outfit-btn').textContent = 'Guardar outfit';
+            selectedOutfitCover = null;
+            outfitEditorPreviewItems = [];
+            activeEditingOutfit = null;
+        }
+
+        function updateOutfitCoverPreview() {
+            const preview = document.getElementById('outfit-cover-preview');
+            const name = document.getElementById('edit-outfit-name').value.trim() || 'Outfit';
+            preview.innerHTML = renderOutfitCoverMarkup({ name, coverImage: selectedOutfitCover }, outfitEditorPreviewItems, 'h-48');
+        }
+
+        function resetOutfitCoverToAutomatic() {
+            outfitCoverSelectionToken++;
+            selectedOutfitCover = null;
+            document.getElementById('edit-outfit-cover-file').value = '';
+            const button = document.getElementById('save-outfit-btn');
+            button.disabled = false;
+            button.textContent = activeEditingOutfit ? 'Guardar cambios' : 'Crear outfit';
+            updateOutfitCoverPreview();
+        }
+
+        async function handleOutfitCoverSelection(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                alert('Selecciona un archivo de imagen válido.');
+                event.target.value = '';
+                return;
+            }
+            const token = ++outfitCoverSelectionToken;
+            const button = document.getElementById('save-outfit-btn');
+            button.disabled = true;
+            button.textContent = 'Procesando imagen...';
+            try {
+                const dataUrl = await compressFolderCover(file);
+                if (token !== outfitCoverSelectionToken) return;
+                selectedOutfitCover = dataUrl;
+                updateOutfitCoverPreview();
+            } catch (error) {
+                if (token === outfitCoverSelectionToken) {
+                    alert('No se pudo procesar esta imagen. Prueba con otra fotografía.');
+                    console.error('Error al preparar portada del outfit:', error);
+                }
+            } finally {
+                if (token === outfitCoverSelectionToken) {
+                    button.disabled = false;
+                    button.textContent = activeEditingOutfit ? 'Guardar cambios' : 'Crear outfit';
+                }
+                event.target.value = '';
+            }
+        }
+
+        function handleSaveOutfit(event) {
+            event.preventDefault();
+            if (!db || document.getElementById('save-outfit-btn').disabled) return;
+            const name = document.getElementById('edit-outfit-name').value.trim();
+            const idValue = document.getElementById('edit-outfit-id').value;
+            if (!name) {
+                alert('Escribe un nombre para el outfit.');
+                document.getElementById('edit-outfit-name').focus();
+                return;
+            }
+            const tx = db.transaction('outfits', 'readwrite');
+            const store = tx.objectStore('outfits');
+            if (idValue) {
+                const id = Number(idValue);
+                const getReq = store.get(id);
+                getReq.onsuccess = () => {
+                    const existing = getReq.result;
+                    if (!existing) {
+                        tx.abort();
+                        alert('No se ha encontrado el outfit que querías editar.');
+                        return;
+                    }
+                    store.put({ ...existing, name, coverImage: selectedOutfitCover || null });
+                };
+            } else {
+                store.add({ name, itemIds: [], coverImage: selectedOutfitCover || null, createdAt: Date.now() });
+            }
+            tx.oncomplete = () => {
+                scheduleCloudSync();
+                const isEditingCurrent = idValue && currentOutfitId === Number(idValue);
+                const savedName = name;
+                closeOutfitEditorModal();
+                if (isEditingCurrent) {
+                    document.getElementById('app-title').textContent = savedName;
+                    loadOutfitItems(Number(idValue));
+                }
+                loadOutfitsView();
+            };
+            tx.onerror = () => alert('No se pudieron guardar los cambios del outfit. Las prendas no se han modificado.');
+        }
+
+        function deleteCurrentOutfit() {
+            if (!currentOutfitId) return;
+            deleteOutfitById(currentOutfitId, true);
+        }
+
+        function deleteOutfitById(outfitIdValue, returnToList = false) {
+            if (!db || !outfitIdValue) return;
+            const id = Number(outfitIdValue);
+            if (!confirm('¿Eliminar este outfit? Solo se eliminará el conjunto; las prendas seguirán guardadas en sus carpetas y en otros outfits.')) return;
+            const tx = db.transaction('outfits', 'readwrite');
+            tx.objectStore('outfits').delete(id);
+            tx.oncomplete = () => {
+                scheduleCloudSync();
+                closeAllCollectionMenus();
+                if (returnToList) showMainSection('outfits');
+                else loadOutfitsView();
+            };
+            tx.onerror = () => alert('No se pudo eliminar el outfit. Las prendas se mantienen intactas.');
+        }
+
+        function addItemIdsToOutfits(itemIds, outfitIds) {
+            const normalizedItemIds = [...new Set((itemIds || []).map(Number).filter(Number.isFinite))];
+            const normalizedOutfitIds = [...new Set((outfitIds || []).map(Number).filter(Number.isFinite))];
+            if (!normalizedItemIds.length || !normalizedOutfitIds.length) return Promise.resolve();
+            return new Promise((resolve, reject) => {
+                if (!db) { reject(new Error('Base de datos no disponible')); return; }
+                let tx;
+                try { tx = db.transaction('outfits', 'readwrite'); }
+                catch (error) { reject(error); return; }
+                const store = tx.objectStore('outfits');
+                const req = store.getAll();
+                req.onsuccess = () => {
+                    const targets = new Set(normalizedOutfitIds.map(String));
+                    (req.result || []).forEach(outfit => {
+                        if (!targets.has(String(outfit.id))) return;
+                        const existing = Array.isArray(outfit.itemIds) ? outfit.itemIds.map(Number) : [];
+                        outfit.itemIds = [...new Set([...existing, ...normalizedItemIds])];
+                        store.put(outfit);
+                    });
+                };
+                req.onerror = () => reject(req.error || new Error('No se pudieron leer los outfits'));
+                tx.oncomplete = () => { scheduleCloudSync(); resolve(); };
+                tx.onerror = () => reject(tx.error || new Error('No se pudieron actualizar los outfits'));
+                tx.onabort = () => reject(tx.error || new Error('Se canceló la actualización de outfits'));
+            });
+        }
+
+        async function updateAddModalOutfitOptions(preselectedOutfitId = null) {
+            const container = document.getElementById('item-outfits-options');
+            if (!container) return;
+            if (!db) { container.innerHTML = '<p class="text-xs text-zinc-500">Almacenamiento no disponible.</p>'; return; }
+            try {
+                const outfits = await new Promise((resolve, reject) => {
+                    const tx = db.transaction('outfits', 'readonly');
+                    const req = tx.objectStore('outfits').getAll();
+                    req.onsuccess = () => resolve(req.result || []);
+                    req.onerror = () => reject(req.error);
+                });
+                container.innerHTML = '';
+                if (!outfits.length) {
+                    container.innerHTML = '<p class="text-xs text-zinc-500">Todavía no hay outfits. Puedes crear uno desde la sección Outfits.</p>';
+                    return;
+                }
+                outfits.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es'));
+                outfits.forEach(outfit => {
+                    const label = document.createElement('label');
+                    label.className = 'flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-zinc-800/70 cursor-pointer';
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = 'new-item-outfit';
+                    checkbox.value = String(outfit.id);
+                    checkbox.className = 'rounded border-zinc-700 bg-zinc-950 text-white focus:ring-zinc-500';
+                    checkbox.checked = preselectedOutfitId !== null && String(outfit.id) === String(preselectedOutfitId);
+                    const icon = document.createElement('span');
+                    icon.className = 'text-zinc-400';
+                    icon.innerHTML = '<i class="fa-solid fa-layer-group"></i>';
+                    const textNode = document.createElement('span');
+                    textNode.className = 'text-sm text-zinc-200';
+                    textNode.textContent = outfit.name || 'Outfit sin nombre';
+                    label.append(checkbox, icon, textNode);
+                    container.appendChild(label);
+                });
+            } catch (error) {
+                console.error('No se pudieron cargar los outfits en el formulario de prenda:', error);
+                container.innerHTML = '<p class="text-xs text-amber-300">No se pudieron cargar los outfits. Puedes guardar la prenda en su carpeta y añadirla después.</p>';
+            }
+        }
+
+        function openAddItemsToOutfitModal() {
+            if (!currentOutfitId || !db) return;
+            const modal = document.getElementById('add-items-to-outfit-modal');
+            const picker = document.getElementById('outfit-items-picker');
+            picker.innerHTML = '<p class="text-sm text-zinc-400 py-4 text-center">Cargando prendas...</p>';
+            modal.classList.remove('hidden');
+            const tx = db.transaction(['items', 'outfits', 'folders'], 'readonly');
+            const itemsReq = tx.objectStore('items').getAll();
+            const outfitReq = tx.objectStore('outfits').get(Number(currentOutfitId));
+            const foldersReq = tx.objectStore('folders').getAll();
+            let items = null, outfit = null, folders = null;
+            let itemReady = false, outfitReady = false, folderReady = false;
+            const render = () => {
+                if (!itemReady || !outfitReady || !folderReady) return;
+                if (!outfit) { picker.innerHTML = '<p class="text-sm text-zinc-400">No se ha encontrado este outfit.</p>'; return; }
+                const presentIds = new Set((Array.isArray(outfit.itemIds) ? outfit.itemIds : []).map(String));
+                const folderNames = new Map((folders || []).map(folder => [String(folder.id), folder.name || 'Carpeta']));
+                items.sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+                picker.innerHTML = '';
+                if (!items.length) {
+                    picker.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-shirt text-3xl text-zinc-600"></i><p class="text-sm text-zinc-300 mt-3">Todavía no hay prendas guardadas.</p><p class="text-xs text-zinc-500 mt-1">Añade primero anuncios desde Vinted.</p></div>';
+                    return;
+                }
+                items.forEach(item => {
+                    const alreadyAdded = presentIds.has(String(item.id));
+                    const label = document.createElement('label');
+                    label.className = `flex items-center gap-3 p-2 rounded-xl border ${alreadyAdded ? 'border-zinc-800 bg-zinc-950/40 opacity-60 cursor-not-allowed' : 'border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800/40 cursor-pointer'} transition`;
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = 'outfit-existing-item';
+                    checkbox.value = String(item.id);
+                    checkbox.disabled = alreadyAdded;
+                    checkbox.className = 'rounded border-zinc-700 bg-zinc-950 text-white focus:ring-zinc-500 shrink-0';
+                    const image = document.createElement('img');
+                    image.src = item.image || '';
+                    image.alt = '';
+                    image.loading = 'lazy';
+                    image.className = 'w-14 h-14 rounded-lg object-cover bg-zinc-800 shrink-0';
+                    const textWrap = document.createElement('div');
+                    textWrap.className = 'min-w-0 flex-1';
+                    const title = document.createElement('p');
+                    title.className = 'text-sm text-zinc-100 truncate';
+                    title.textContent = item.title || 'Prenda sin nombre';
+                    const subtitle = document.createElement('p');
+                    subtitle.className = 'text-xs text-zinc-500 mt-1';
+                    subtitle.textContent = folderNames.get(String(item.folderId)) || 'Sin carpeta';
+                    textWrap.append(title, subtitle);
+                    const status = document.createElement('span');
+                    status.className = 'text-[10px] text-zinc-500 shrink-0';
+                    status.textContent = alreadyAdded ? 'Ya añadida' : '';
+                    label.append(checkbox, image, textWrap, status);
+                    picker.appendChild(label);
+                });
+            };
+            itemsReq.onsuccess = () => { items = itemsReq.result || []; itemReady = true; render(); };
+            outfitReq.onsuccess = () => { outfit = outfitReq.result || null; outfitReady = true; render(); };
+            foldersReq.onsuccess = () => { folders = foldersReq.result || []; folderReady = true; render(); };
+            itemsReq.onerror = outfitReq.onerror = foldersReq.onerror = () => { picker.innerHTML = '<p class="text-sm text-amber-300">No se pudieron cargar las prendas.</p>'; };
+        }
+
+        function closeAddItemsToOutfitModal() {
+            document.getElementById('add-items-to-outfit-modal').classList.add('hidden');
+            document.getElementById('outfit-items-picker').innerHTML = '';
+        }
+
+        async function handleAddSelectedItemsToOutfit() {
+            if (!currentOutfitId) return;
+            const selected = [...document.querySelectorAll('input[name="outfit-existing-item"]:checked')].map(input => Number(input.value));
+            if (!selected.length) {
+                alert('Selecciona al menos una prenda nueva para añadir. Las que ya están en el outfit aparecen marcadas como añadidas.');
+                return;
+            }
+            const id = Number(currentOutfitId);
+            try {
+                await addItemIdsToOutfits(selected, [id]);
+                closeAddItemsToOutfitModal();
+                loadOutfitItems(id);
+                loadOutfitsView();
+            } catch (error) {
+                console.error(error);
+                alert('No se pudieron añadir las prendas al outfit. No se ha eliminado ninguna prenda del armario.');
+            }
+        }
+
+        function removeItemFromOutfit(itemId, outfitId, closeDetailOnSuccess = false) {
+            const targetOutfitId = Number(outfitId || currentOutfitId);
+            const targetItemId = Number(itemId);
+            if (!targetOutfitId || !targetItemId || !db) return;
+            if (!confirm('¿Quitar esta prenda de este outfit? Seguirá guardada en su carpeta y en los demás outfits.')) return;
+            const tx = db.transaction('outfits', 'readwrite');
+            const store = tx.objectStore('outfits');
+            const req = store.get(targetOutfitId);
+            req.onsuccess = () => {
+                const outfit = req.result;
+                if (!outfit) return;
+                outfit.itemIds = (Array.isArray(outfit.itemIds) ? outfit.itemIds : []).filter(id => String(id) !== String(targetItemId));
+                store.put(outfit);
+            };
+            tx.oncomplete = () => {
+                scheduleCloudSync();
+                if (closeDetailOnSuccess) closeItemDetailModal();
+                if (currentOutfitId === targetOutfitId) loadOutfitItems(targetOutfitId);
+                loadOutfitsView();
+            };
+            tx.onerror = () => alert('No se pudo quitar la prenda del outfit. La prenda sigue guardada en el armario.');
+        }
+
+        function removeActiveItemFromOutfit() {
+            if (!activeEditingItem || !activeItemSourceOutfitId) return;
+            removeItemFromOutfit(activeEditingItem.id, activeItemSourceOutfitId, true);
+        }
+
+        function openNewFolderModal() {
+            document.getElementById('new-folder-modal').classList.remove('hidden');
+            document.getElementById('new-folder-name').value = '';
+            document.getElementById('new-folder-name').focus();
+        }
+        function closeNewFolderModal() {
+            document.getElementById('new-folder-modal').classList.add('hidden');
+        }
+
+        // Solo se admiten imágenes seguras para la portada: URLs existentes o imágenes JPEG optimizadas.
+        function isUsableFolderCover(value) {
+            if (typeof value !== 'string' || !value) return false;
+            if (/^data:image\/jpeg;base64,[a-z0-9+/]+=*$/i.test(value)) return true;
+            try {
+                const url = new URL(value);
+                return (url.protocol === 'https:' || url.protocol === 'http:');
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[char]));
+        }
+
+        async function openEditFolderModal(folderId) {
+            if (!db || !folderId) return;
+            const id = Number(folderId);
+            const tx = db.transaction(['folders', 'items'], 'readonly');
+            const folderReq = tx.objectStore('folders').get(id);
+            const itemsReq = tx.objectStore('items').index('folderId').getAll(id);
+            let folderReady = false;
+            let itemsReady = false;
+            let folder = null;
+            let items = [];
+
+            const showWhenReady = () => {
+                if (!folderReady || !itemsReady) return;
+                if (!folder) {
+                    alert('No se ha encontrado esta carpeta. Recarga la página e inténtalo de nuevo.');
+                    return;
+                }
+                activeEditingFolder = folder;
+                selectedFolderCover = isUsableFolderCover(folder.coverImage) && String(folder.coverImage).startsWith('data:image/jpeg;base64,')
+                    ? folder.coverImage
+                    : null;
+                automaticFolderCoverImage = items.length ? (items[items.length - 1].image || null) : null;
+                folderCoverSelectionToken++;
+                document.getElementById('edit-folder-id').value = folder.id;
+                document.getElementById('edit-folder-name').value = folder.name || '';
+                document.getElementById('edit-folder-cover-file').value = '';
+                updateFolderCoverPreview();
+                document.getElementById('edit-folder-modal').classList.remove('hidden');
+                document.getElementById('edit-folder-name').focus();
+            };
+
+            folderReq.onsuccess = () => { folder = folderReq.result || null; folderReady = true; showWhenReady(); };
+            itemsReq.onsuccess = () => { items = itemsReq.result || []; itemsReady = true; showWhenReady(); };
+            folderReq.onerror = itemsReq.onerror = () => alert('No se pudieron cargar los datos de la carpeta.');
+        }
+
+        function closeEditFolderModal() {
+            folderCoverSelectionToken++;
+            document.getElementById('edit-folder-modal').classList.add('hidden');
+            document.getElementById('edit-folder-cover-file').value = '';
+            const preview = document.getElementById('edit-folder-cover-preview');
+            preview.removeAttribute('src');
+            preview.classList.add('hidden');
+            document.getElementById('edit-folder-cover-placeholder').classList.remove('hidden');
+            document.getElementById('save-folder-edit-btn').disabled = false;
+            activeEditingFolder = null;
+            selectedFolderCover = null;
+            automaticFolderCoverImage = null;
+        }
+
+        function updateFolderCoverPreview() {
+            const preview = document.getElementById('edit-folder-cover-preview');
+            const placeholder = document.getElementById('edit-folder-cover-placeholder');
+            const cover = selectedFolderCover || automaticFolderCoverImage;
+            if (cover && isUsableFolderCover(cover)) {
+                preview.src = cover;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            } else {
+                preview.removeAttribute('src');
+                preview.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+            }
+        }
+
+        function resetFolderCoverToAutomatic() {
+            // Invalida una conversión de imagen que aún pudiera estar en curso.
+            folderCoverSelectionToken++;
+            selectedFolderCover = null;
+            document.getElementById('edit-folder-cover-file').value = '';
+            const saveButton = document.getElementById('save-folder-edit-btn');
+            saveButton.disabled = false;
+            saveButton.textContent = 'Guardar cambios';
+            updateFolderCoverPreview();
+        }
+
+        async function handleFolderCoverSelection(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                alert('Selecciona un archivo de imagen válido.');
+                event.target.value = '';
+                return;
+            }
+            const token = ++folderCoverSelectionToken;
+            const saveButton = document.getElementById('save-folder-edit-btn');
+            saveButton.disabled = true;
+            saveButton.textContent = 'Procesando imagen...';
+            try {
+                const dataUrl = await compressFolderCover(file);
+                if (token !== folderCoverSelectionToken) return;
+                selectedFolderCover = dataUrl;
+                updateFolderCoverPreview();
+            } catch (error) {
+                if (token === folderCoverSelectionToken) {
+                    alert('No se pudo procesar esta imagen. Prueba con otra fotografía.');
+                    console.error('Error al preparar portada de carpeta:', error);
+                }
+            } finally {
+                if (token === folderCoverSelectionToken) {
+                    saveButton.disabled = false;
+                    saveButton.textContent = 'Guardar cambios';
+                }
+                event.target.value = '';
+            }
+        }
+
+        function compressFolderCover(file) {
+            return new Promise((resolve, reject) => {
+                const objectUrl = URL.createObjectURL(file);
+                const image = new Image();
+                image.onload = () => {
+                    try {
+                        const maxSide = 1200;
+                        const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+                        const width = Math.max(1, Math.round(image.naturalWidth * scale));
+                        const height = Math.max(1, Math.round(image.naturalHeight * scale));
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const context = canvas.getContext('2d');
+                        if (!context) throw new Error('Canvas no disponible');
+                        context.fillStyle = '#18181b';
+                        context.fillRect(0, 0, width, height);
+                        context.drawImage(image, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.84));
+                    } catch (error) {
+                        reject(error);
+                    } finally {
+                        URL.revokeObjectURL(objectUrl);
+                    }
+                };
+                image.onerror = () => {
+                    URL.revokeObjectURL(objectUrl);
+                    reject(new Error('No se pudo leer la imagen seleccionada'));
+                };
+                image.src = objectUrl;
+            });
+        }
+
+        function handleSaveFolderEdit(event) {
+            event.preventDefault();
+            if (!db || !activeEditingFolder) return;
+            const id = Number(document.getElementById('edit-folder-id').value);
+            const name = document.getElementById('edit-folder-name').value.trim();
+            if (!name) {
+                alert('Escribe un nombre para la carpeta.');
+                document.getElementById('edit-folder-name').focus();
+                return;
+            }
+            if (document.getElementById('save-folder-edit-btn').disabled) return;
+
+            const tx = db.transaction('folders', 'readwrite');
+            const store = tx.objectStore('folders');
+            const getReq = store.get(id);
+            getReq.onsuccess = () => {
+                const existing = getReq.result;
+                if (!existing) {
+                    tx.abort();
+                    alert('No se ha encontrado la carpeta que querías editar.');
+                    return;
+                }
+                const updatedFolder = {
+                    ...existing,
+                    name,
+                    coverImage: selectedFolderCover || null
+                };
+                store.put(updatedFolder);
+            };
+            tx.oncomplete = () => {
+                scheduleCloudSync();
+                if (currentFolderId === id) {
+                    document.getElementById('app-title').textContent = name;
+                    loadFolderItems(id, name);
+                }
+                closeEditFolderModal();
+                loadFoldersView();
+            };
+            tx.onerror = () => alert('No se pudieron guardar los cambios de la carpeta. Tus prendas no se han modificado.');
+            tx.onabort = () => {};
+        }
+
+        function handleCreateFolder(e) {
+            e.preventDefault();
+            const name = document.getElementById('new-folder-name').value.trim();
+            if (!name || !db) return;
+
+            const tx = db.transaction('folders', 'readwrite');
+            const store = tx.objectStore('folders');
+            const req = store.add({ name, createdAt: Date.now() });
+
+            req.onsuccess = () => {
+                closeNewFolderModal();
+                loadFoldersView();
+            };
+            tx.oncomplete = () => scheduleCloudSync();
+        }
+
+        function deleteCurrentFolder() {
+            if (!currentFolderId) return;
+            deleteFolderById(currentFolderId, true);
+        }
+
+        function deleteFolderById(folderIdValue, returnHome = false) {
+            if (!db || !folderIdValue) return;
+            const folderId = Number(folderIdValue);
+            if (!confirm('¿Eliminar esta carpeta y sus prendas? Las prendas también se quitarán de los outfits, pero las demás prendas de esos outfits se conservarán.')) return;
+
+            const tx = db.transaction(['folders', 'items', 'outfits'], 'readwrite');
+            const folderStore = tx.objectStore('folders');
+            const itemStore = tx.objectStore('items');
+            const outfitStore = tx.objectStore('outfits');
+            const itemReq = itemStore.index('folderId').getAllKeys(folderId);
+            const outfitsReq = outfitStore.getAll();
+            let deletedItemIds = null;
+            let outfits = null;
+            let applied = false;
+            const applyChanges = () => {
+                if (applied || deletedItemIds === null || outfits === null) return;
+                applied = true;
+                const deleted = new Set(deletedItemIds.map(String));
+                deletedItemIds.forEach(itemId => itemStore.delete(itemId));
+                outfits.forEach(outfit => {
+                    const oldIds = Array.isArray(outfit.itemIds) ? outfit.itemIds : [];
+                    const newIds = oldIds.filter(itemId => !deleted.has(String(itemId)));
+                    if (newIds.length !== oldIds.length) outfitStore.put({ ...outfit, itemIds: newIds });
+                });
+                folderStore.delete(folderId);
+            };
+            itemReq.onsuccess = () => { deletedItemIds = itemReq.result || []; applyChanges(); };
+            outfitsReq.onsuccess = () => { outfits = outfitsReq.result || []; applyChanges(); };
+            tx.oncomplete = () => {
+                scheduleCloudSync();
+                closeAllCollectionMenus();
+                if (returnHome) goHome();
+                else loadFoldersView();
+            };
+            tx.onerror = () => alert('No se pudo eliminar la carpeta. La operación se ha cancelado y no se han cambiado los outfits.');
+        }
+
+        async function openAddModal(prefillUrl = '', prefillTitle = '') {
+            activeScrapeRequestId++;
+            document.getElementById('add-modal').classList.remove('hidden');
+            document.getElementById('item-url').value = prefillUrl;
+            document.getElementById('item-image-url').value = '';
+            document.getElementById('image-preview').removeAttribute('src');
+            document.getElementById('image-preview-container').classList.add('hidden');
+            document.getElementById('scraping-status').classList.add('hidden');
+            setAddSaveState(false, 'Esperando foto automática...');
+
+            let smartTitle = prefillTitle;
+            if (!smartTitle && prefillUrl) smartTitle = generateTitleFromUrl(prefillUrl);
+            document.getElementById('item-title').value = smartTitle || 'Prenda de Vinted';
+
+            await updateFolderSelects();
+            if (currentFolderId) document.getElementById('item-folder').value = currentFolderId;
+            await updateAddModalOutfitOptions(currentOutfitId);
+
+            if (prefillUrl) {
+                fetchRealVintedData(prefillUrl);
+            } else {
+                document.getElementById('item-url').focus();
+            }
+        }
+
+        function generateTitleFromUrl(url) {
+            try {
+                const urlObj = new URL(url);
+                const segments = urlObj.pathname.split('/').filter(Boolean);
+                const lastSegment = segments[segments.length - 1];
+                if (lastSegment) {
+                    let namePart = lastSegment.replace(/^\d+[-_]?/, '');
+                    if (namePart) {
+                        namePart = namePart.replace(/[-_]/g, ' ');
+                        return namePart.split(' ')
+                            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                            .join(' ');
+                    }
+                }
+            } catch (e) {}
+            return 'Prenda de Vinted';
+        }
+
+        function closeAddModal() {
+            activeScrapeRequestId++;
+            if (urlInputDebounce) clearTimeout(urlInputDebounce);
+            document.getElementById('add-modal').classList.add('hidden');
+            document.getElementById('scraping-status').classList.add('hidden');
+        }
+
+        async function updateFolderSelects() {
+            return new Promise((resolve) => {
+                if (!db) return resolve();
+                const tx = db.transaction('folders', 'readonly');
+                const store = tx.objectStore('folders');
+                const req = store.getAll();
+
+                req.onsuccess = () => {
+                    const folders = req.result || [];
+                    const selects = [document.getElementById('item-folder'), document.getElementById('edit-item-folder')];
+                    
+                    selects.forEach(select => {
+                        if (!select) return;
+                        select.innerHTML = '';
+                        folders.forEach(f => {
+                            const opt = document.createElement('option');
+                            opt.value = f.id;
+                            opt.textContent = f.name;
+                            select.appendChild(opt);
+                        });
+                    });
+                    resolve();
+                };
+            });
+        }
+
+        function setAddSaveState(enabled, label) {
+            const button = document.getElementById('save-btn');
+            button.disabled = !enabled;
+            button.textContent = label || (enabled ? 'Guardar Prenda' : 'Esperando foto automática...');
+            button.classList.toggle('opacity-40', !enabled);
+            button.classList.toggle('cursor-not-allowed', !enabled);
+        }
+
+        function isVintedListingUrl(value) {
+            try {
+                const u = new URL(value);
+                const supportedHost = /^([a-z0-9-]+\.)?vinted\.(es|com|fr|it|pt|de|nl|be|pl|co\.uk|at|ch|lu|cz|sk|hu|lt|lv|ee|se|dk|fi|gr|ro|bg|hr|si)$/i.test(u.hostname);
+                return u.protocol === 'https:' && supportedHost && /\/items?\//i.test(u.pathname);
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function isVintedImageUrl(value) {
+            try {
+                const u = new URL(value);
+                return u.protocol === 'https:' && /^images\d*\.vinted\.net$/i.test(u.hostname);
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function isAppImageUrl(value) {
+            if (isVintedImageUrl(value)) return true;
+            try {
+                const candidate = new URL(value);
+                const worker = new URL(VINTED_METADATA_WORKER);
+                return candidate.origin === worker.origin && candidate.pathname === worker.pathname
+                    && candidate.searchParams.has('image');
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function getWorkerImageProxyUrl(imageUrl, listingUrl) {
+            const endpoint = new URL(VINTED_METADATA_WORKER);
+            endpoint.searchParams.set('image', imageUrl);
+            if (listingUrl) endpoint.searchParams.set('ref', listingUrl);
+            return endpoint.toString();
+        }
+
+        function waitForImageToLoad(url, timeoutMs = 10000) {
+            return new Promise((resolve, reject) => {
+                const image = new Image();
+                let finished = false;
+                const timer = setTimeout(() => finish(new Error('La imagen ha tardado demasiado')), timeoutMs);
+                function finish(error) {
+                    if (finished) return;
+                    finished = true;
+                    clearTimeout(timer);
+                    image.onload = null;
+                    image.onerror = null;
+                    error ? reject(error) : resolve(true);
+                }
+                image.onload = () => finish();
+                image.onerror = () => finish(new Error('La imagen no se puede cargar'));
+                image.src = url;
+            });
+        }
+
+        function extractEmbeddedVintedImageUrl(html) {
+            // Algunas versiones de Vinted dejan las fotos dentro de JSON incrustado en scripts.
+            // Normalizamos las barras escapadas y las entidades sin ejecutar ese JavaScript.
+            const normalized = String(html || '')
+                .replace(/&amp;/gi, '&')
+                .replace(/\\u002f/gi, '/')
+                .replace(/\\u003a/gi, ':')
+                .replace(/\\u0026/gi, '&')
+                .replace(/\\\//g, '/');
+            const matches = normalized.match(/https?:\/\/images\d*\.vinted\.net\/[^\s"'<>\\]+/gi) || [];
+            for (let raw of matches) {
+                raw = raw.replace(/[),;\]}]+$/g, '').trim();
+                try {
+                    const u = new URL(raw);
+                    if (isVintedImageUrl(u.href) && /\/t\//i.test(u.pathname)) return u.href;
+                } catch (_) {}
+            }
+            return '';
+        }
+
+        function extractMetadataFromHtml(html) {
+            if (typeof html !== 'string' || !html.trim()) throw new Error('La fuente no devolvió HTML.');
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const readMeta = (selectors) => {
+                for (const selector of selectors) {
+                    const element = doc.querySelector(selector);
+                    if (element) {
+                        const value = element.getAttribute('content');
+                        if (value) return value.trim();
+                    }
+                }
+                return '';
+            };
+
+            let image = readMeta([
+                'meta[property="og:image:secure_url"]',
+                'meta[property="og:image"]',
+                'meta[name="twitter:image"]'
+            ]).replace(/&amp;/g, '&');
+            let title = readMeta(['meta[property="og:title"]', 'meta[name="twitter:title"]']);
+
+            // Alternativa cuando Vinted incluye los datos de la prenda en JSON-LD.
+            if (!isVintedImageUrl(image)) {
+                const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+                for (const script of scripts) {
+                    try {
+                        const json = JSON.parse(script.textContent || 'null');
+                        const stack = Array.isArray(json) ? [...json] : [json];
+                        while (stack.length) {
+                            const node = stack.pop();
+                            if (!node || typeof node !== 'object') continue;
+                            if (Array.isArray(node)) { stack.push(...node); continue; }
+                            const types = Array.isArray(node['@type']) ? node['@type'] : [node['@type']];
+                            if (!title && typeof node.name === 'string') title = node.name;
+                            if (types.some(t => String(t || '').toLowerCase() === 'product') && node.image) {
+                                const candidate = Array.isArray(node.image) ? node.image[0] : node.image;
+                                const possible = typeof candidate === 'string' ? candidate : (candidate.url || candidate.contentUrl || '');
+                                if (isVintedImageUrl(possible)) { image = possible; break; }
+                            }
+                            for (const value of Object.values(node)) {
+                                if (value && typeof value === 'object') stack.push(value);
+                            }
+                        }
+                    } catch (_) {}
+                    if (isVintedImageUrl(image)) break;
+                }
+            }
+
+            // Fallback adicional: localizar URL del CDN de imágenes dentro del HTML completo.
+            if (!isVintedImageUrl(image)) image = extractEmbeddedVintedImageUrl(html);
+            image = String(image || '').replace(/&amp;/g, '&').trim();
+            if (image.startsWith('//')) image = 'https:' + image;
+            if (!isVintedImageUrl(image)) {
+                const normalized = String(html).replace(/\\\//g, '/').replace(/\\u002f/gi, '/');
+                const candidates = (normalized.match(/https?:\/\/images\d*\.vinted\.net\//gi) || []).length;
+                const likelyBlocked = /captcha|verify you are human|access denied|temporarily blocked|cloudflare/i.test(normalized);
+                throw new Error(`No se encontró una foto válida en el HTML (fotos Vinted detectadas: ${candidates}; posible bloqueo: ${likelyBlocked ? 'sí' : 'no'}).`);
+            }
+            return { image, title: String(title || '').trim() };
+        }
+
+        async function fetchHtmlThroughProxy(proxyUrl, responseMode = 'text') {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 12000);
+            try {
+                const response = await fetch(proxyUrl, { signal: controller.signal, cache: 'no-store' });
+                if (!response.ok) throw new Error('El proxy respondió con error ' + response.status);
+                if (responseMode === 'allorigins') {
+                    const data = await response.json();
+                    if (!data || typeof data.contents !== 'string') throw new Error('Respuesta vacía del proxy');
+                    return data.contents;
+                }
+                return await response.text();
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        async function getMetadataFromWorker(url) {
+            if (!VINTED_METADATA_WORKER) throw new Error('Worker no configurado');
+            const endpoint = new URL(VINTED_METADATA_WORKER);
+            endpoint.searchParams.set('url', url);
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 14000);
+            try {
+                const response = await fetch(endpoint.toString(), { signal: controller.signal, cache: 'no-store' });
+                const data = await response.json();
+                if (!response.ok || !data || !data.image) {
+                    throw new Error((data && data.error) || 'El servicio no encontró la foto');
+                }
+                if (!isVintedImageUrl(data.image)) throw new Error('El servicio devolvió una imagen no válida');
+                // La app usa el Worker como proxy de imagen para evitar que el navegador
+                // tenga que abrir directamente la URL del CDN de Vinted.
+                return {
+                    image: getWorkerImageProxyUrl(data.image, url),
+                    title: String(data.title || '').trim()
+                };
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        // Reintenta automáticamente el Worker ante errores transitorios (por ejemplo, 429/5xx).
+        // La caché de Cloudflare se mantiene en el Worker; no se modifica desde el navegador.
+        async function getMetadataFromWorkerWithRetry(url, maxAttempts = 2) {
+            let lastError;
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                try {
+                    const result = await getMetadataFromWorker(url);
+                    if (!isAppImageUrl(result.image)) throw new Error('La dirección de imagen no es válida para la aplicación');
+                    // Reintenta también si el propio proxy de imagen falla al cargar, no solo si falla el JSON.
+                    await waitForImageToLoad(result.image, 9000);
+                    return { ...result, _imageVerified: true };
+                } catch (error) {
+                    lastError = error;
+                    if (attempt < maxAttempts) {
+                        await new Promise(resolve => setTimeout(resolve, 900));
+                    }
+                }
+            }
+            throw lastError || new Error('El Worker no ha podido obtener la foto.');
+        }
+
+        async function getMetadataFromPublicProxies(url) {
+            const sources = [
+                () => fetchHtmlThroughProxy(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, 'allorigins'),
+                () => fetchHtmlThroughProxy(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, 'text')
+            ];
+            const failures = [];
+            for (const getHtml of sources) {
+                try {
+                    const html = await getHtml();
+                    return extractMetadataFromHtml(html);
+                } catch (error) {
+                    failures.push(error);
+                }
+            }
+            throw new AggregateError(failures, 'Los proxies públicos no han podido extraer la foto');
+        }
+
+        // Busca y valida automáticamente una foto real. Nunca asigna una imagen genérica.
+        async function fetchRealVintedData(rawUrl) {
+            const url = String(rawUrl || '').trim();
+            const requestId = ++activeScrapeRequestId;
+            const statusBox = document.getElementById('scraping-status');
+            const statusText = document.getElementById('scraping-text');
+            const previewContainer = document.getElementById('image-preview-container');
+            const previewImg = document.getElementById('image-preview');
+            const imageInput = document.getElementById('item-image-url');
+
+            imageInput.value = '';
+            previewImg.removeAttribute('src');
+            previewContainer.classList.add('hidden');
+            setAddSaveState(false, 'Buscando foto automática...');
+
+            if (!url) {
+                statusBox.classList.add('hidden');
+                return;
+            }
+            statusBox.classList.remove('hidden');
+            if (!isVintedListingUrl(url)) {
+                statusText.textContent = 'Pega un enlace válido a un anuncio de Vinted.';
+                setAddSaveState(false, 'Enlace de Vinted no válido');
+                return;
+            }
+
+            statusText.textContent = VINTED_METADATA_WORKER
+                ? 'Buscando la foto en Vinted. Si el Worker falla, se reintentará automáticamente...'
+                : 'Buscando la foto automáticamente. Para más fiabilidad, configura el Worker incluido...';
+
+            const attempts = [];
+            if (VINTED_METADATA_WORKER) attempts.push(() => getMetadataFromWorkerWithRetry(url));
+            // Se intentan también por separado para pasar al siguiente origen si la primera imagen no carga.
+            attempts.push(async () => extractMetadataFromHtml(await fetchHtmlThroughProxy(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, 'allorigins')));
+            attempts.push(async () => extractMetadataFromHtml(await fetchHtmlThroughProxy(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, 'text')));
+
+            try {
+                // Cada origen debe entregar una imagen de Vinted que además cargue correctamente.
+                const metadata = await Promise.any(attempts.map(async (getMetadata) => {
+                    const result = await getMetadata();
+                    if (!isAppImageUrl(result.image)) throw new Error('La dirección de imagen no es válida para la aplicación');
+                    if (!result._imageVerified) await waitForImageToLoad(result.image, 10000);
+                    return { image: result.image, title: result.title };
+                }));
+                // Evita que una respuesta antigua pise la importación que el usuario acaba de iniciar.
+                if (requestId !== activeScrapeRequestId) return;
+
+                imageInput.value = metadata.image;
+                previewImg.src = metadata.image;
+                previewContainer.classList.remove('hidden');
+                statusText.textContent = 'Foto real obtenida y verificada. Ya puedes guardar la prenda.';
+                setAddSaveState(true, 'Guardar Prenda');
+
+                const titleInput = document.getElementById('item-title');
+                const oldAutoTitle = generateTitleFromUrl(url);
+                if (metadata.title && (!titleInput.value.trim() || titleInput.value === 'Prenda de Vinted' || titleInput.value === oldAutoTitle)) {
+                    titleInput.value = metadata.title;
+                }
+            } catch (error) {
+                if (requestId !== activeScrapeRequestId) return;
+                console.error('No se pudo obtener automáticamente la foto de Vinted:', error);
+                imageInput.value = '';
+                previewContainer.classList.add('hidden');
+                const scrapeErrors = error instanceof AggregateError ? (error.errors || []) : [error];
+                const scrapeDetails = [...new Set(scrapeErrors.map(e => String(e && e.message || e)).filter(Boolean))].slice(0, 2).join(' · ');
+                statusText.textContent = 'No se pudo obtener la foto real automáticamente tras los reintentos. ' + (scrapeDetails ? ('Detalle: ' + scrapeDetails.slice(0, 260) + '. ') : '') + 'Puedes volver a intentarlo; no se guardará una imagen genérica.';
+                setAddSaveState(false, 'Foto automática no disponible');
+            }
+        }
+
+        function handleAddItem(e) {
+            e.preventDefault();
+            const url = document.getElementById('item-url').value.trim();
+            const title = document.getElementById('item-title').value.trim();
+            const folderId = parseInt(document.getElementById('item-folder').value, 10);
+            const image = document.getElementById('item-image-url').value;
+            const selectedOutfitIds = [...document.querySelectorAll('input[name="new-item-outfit"]:checked')].map(input => Number(input.value));
+
+            if (!isVintedListingUrl(url) || !isAppImageUrl(image)) {
+                alert('No se puede guardar todavía: la aplicación necesita obtener y verificar automáticamente la foto real de Vinted.');
+                if (url) fetchRealVintedData(url);
+                return;
+            }
+            if (!db || !Number.isFinite(folderId)) {
+                alert('No se ha podido acceder a la base de datos o a una carpeta. Recarga la página e inténtalo de nuevo.');
+                return;
+            }
+
+            const tx = db.transaction('items', 'readwrite');
+            const store = tx.objectStore('items');
+            const req = store.add({ folderId, title, url, image, createdAt: Date.now() });
+            let newItemId = null;
+            req.onsuccess = () => { newItemId = req.result; };
+            req.onerror = () => alert('No se ha podido guardar la prenda. Comprueba el almacenamiento del navegador.');
+            tx.oncomplete = async () => {
+                scheduleCloudSync();
+                if (newItemId === null) return;
+                try {
+                    if (selectedOutfitIds.length) await addItemIdsToOutfits([newItemId], selectedOutfitIds);
+                } catch (error) {
+                    console.error('La prenda se guardó, pero no se pudieron actualizar sus outfits:', error);
+                    alert('La prenda se ha guardado en su carpeta, pero no se pudo vincular a todos los outfits seleccionados. Puedes añadirla después desde la sección Outfits.');
+                }
+                closeAddModal();
+                goHome();
+            };
+        }
+
+        // También intenta la extracción automática si el enlace se pega/escribe manualmente.
+        document.getElementById('item-url').addEventListener('input', () => {
+            activeScrapeRequestId++;
+            if (urlInputDebounce) clearTimeout(urlInputDebounce);
+            document.getElementById('item-image-url').value = '';
+            document.getElementById('image-preview').removeAttribute('src');
+            document.getElementById('image-preview-container').classList.add('hidden');
+            setAddSaveState(false, 'Esperando foto automática...');
+            const value = document.getElementById('item-url').value.trim();
+            if (!value) {
+                document.getElementById('scraping-status').classList.add('hidden');
+                return;
+            }
+            document.getElementById('scraping-status').classList.remove('hidden');
+            document.getElementById('scraping-text').textContent = 'Enlace detectado. Iniciando búsqueda automática...';
+            urlInputDebounce = setTimeout(() => fetchRealVintedData(value), 800);
+        });
+
+        async function openItemDetailModal(item, sourceOutfitId = null) {
+            activeEditingItem = item;
+            activeItemSourceOutfitId = sourceOutfitId ? Number(sourceOutfitId) : null;
+            activeItemSourceFolderId = activeItemSourceOutfitId ? null : (currentFolderId ? Number(currentFolderId) : null);
+            document.getElementById('detail-image').src = item.image;
+            document.getElementById('detail-vinted-link').href = item.url;
+            document.getElementById('edit-item-id').value = item.id;
+            document.getElementById('edit-item-title').value = item.title;
+            document.getElementById('edit-item-url').value = item.url;
+            document.getElementById('delete-item-btn').classList.toggle('hidden', Boolean(activeItemSourceOutfitId));
+            document.getElementById('remove-from-outfit-btn').classList.toggle('hidden', !activeItemSourceOutfitId);
+
+            await updateFolderSelects();
+            document.getElementById('edit-item-folder').value = item.folderId;
+            document.getElementById('item-detail-modal').classList.remove('hidden');
+        }
+
+        function closeItemDetailModal() {
+            document.getElementById('item-detail-modal').classList.add('hidden');
+            activeEditingItem = null;
+            activeItemSourceOutfitId = null;
+            activeItemSourceFolderId = null;
+            document.getElementById('delete-item-btn').classList.remove('hidden');
+            document.getElementById('remove-from-outfit-btn').classList.add('hidden');
+        }
+
+        function handleSaveItemEdit(e) {
+            e.preventDefault();
+            if (!activeEditingItem) return;
+
+            const sourceOutfitId = activeItemSourceOutfitId;
+            const sourceFolderId = activeItemSourceFolderId;
+            const updatedTitle = document.getElementById('edit-item-title').value.trim();
+            const updatedUrl = document.getElementById('edit-item-url').value.trim();
+            const updatedFolderId = parseInt(document.getElementById('edit-item-folder').value, 10);
+            if (!Number.isFinite(updatedFolderId)) {
+                alert('Selecciona una carpeta válida.');
+                return;
+            }
+
+            const tx = db.transaction('items', 'readwrite');
+            const store = tx.objectStore('items');
+            const updatedItem = { ...activeEditingItem, title: updatedTitle, url: updatedUrl, folderId: updatedFolderId };
+            store.put(updatedItem);
+            tx.oncomplete = () => {
+                scheduleCloudSync();
+                closeItemDetailModal();
+                if (sourceOutfitId) {
+                    loadOutfitItems(sourceOutfitId);
+                    loadOutfitsView();
+                } else if (sourceFolderId) {
+                    const folderName = document.getElementById('current-folder-name').textContent || 'Carpeta';
+                    loadFolderItems(sourceFolderId, folderName);
+                    loadFoldersView();
+                } else {
+                    goHome();
+                }
+            };
+            tx.onerror = () => alert('No se pudieron guardar los cambios de la prenda.');
+        }
+
+        function deleteItemFromDetail() {
+            if (!activeEditingItem || activeItemSourceOutfitId) return;
+            if (!confirm('¿Eliminar esta prenda de tu armario? También desaparecerá de los outfits en los que esté incluida.')) return;
+
+            const itemId = Number(activeEditingItem.id);
+            const sourceFolderId = activeItemSourceFolderId;
+            const sourceFolderName = document.getElementById('current-folder-name').textContent || 'Carpeta';
+            const tx = db.transaction(['items', 'outfits'], 'readwrite');
+            tx.objectStore('items').delete(itemId);
+            const outfitsStore = tx.objectStore('outfits');
+            const outfitsReq = outfitsStore.getAll();
+            outfitsReq.onsuccess = () => {
+                (outfitsReq.result || []).forEach(outfit => {
+                    const oldIds = Array.isArray(outfit.itemIds) ? outfit.itemIds : [];
+                    const newIds = oldIds.filter(id => String(id) !== String(itemId));
+                    if (newIds.length !== oldIds.length) outfitsStore.put({ ...outfit, itemIds: newIds });
+                });
+            };
+            tx.oncomplete = () => {
+                scheduleCloudSync();
+                closeItemDetailModal();
+                if (sourceFolderId) {
+                    loadFolderItems(sourceFolderId, sourceFolderName);
+                    loadFoldersView();
+                } else {
+                    goHome();
+                }
+            };
+            tx.onerror = () => alert('No se pudo eliminar la prenda. No se han guardado cambios parciales.');
+        }
+
+        // ------------------ SINCRONIZACIÓN CON CLOUDFLARE D1 ------------------
+        // El modo nube está en pruebas. Conserva la exportación JSON como respaldo.
+        function cloudHeaders(includeAuth = true) {
+            const headers = { 'Content-Type': 'application/json' };
+            const token = cloudState.token || localStorage.getItem(CLOUD_TOKEN_KEY);
+            if (includeAuth && token) headers.Authorization = `Bearer ${token}`;
+            return headers;
+        }
+
+        async function cloudRequest(path, options = {}) {
+            const method = options.method || 'GET';
+            const hasBody = Object.prototype.hasOwnProperty.call(options, 'body');
+            const response = await fetch(`${CLOUD_API_BASE}${path}`, {
+                method,
+                cache: 'no-store',
+                headers: cloudHeaders(options.auth !== false),
+                ...(hasBody ? { body: JSON.stringify(options.body) } : {})
+            });
+            let data = {};
+            try { data = await response.json(); } catch (_) {}
+            if (!response.ok) {
+                const error = new Error(data.error || `La API respondió con HTTP ${response.status}.`);
+                error.status = response.status;
+                error.code = data.code || '';
+                throw error;
+            }
+            return data;
+        }
+
+        function setCloudModalStatus(message, type = 'info') {
+            const box = document.getElementById('cloud-modal-status');
+            if (!box) return;
+            box.textContent = message || '';
+            box.className = 'rounded-xl border p-3 text-xs leading-relaxed';
+            box.classList.toggle('hidden', !message);
+            if (!message) return;
+            if (type === 'error') box.classList.add('border-red-500/40', 'bg-red-500/10', 'text-red-200');
+            else if (type === 'success') box.classList.add('border-emerald-500/40', 'bg-emerald-500/10', 'text-emerald-200');
+            else box.classList.add('border-zinc-700', 'bg-zinc-800/70', 'text-zinc-200');
+        }
+
+        function updateCloudHeader() {
+            const icon = document.getElementById('cloud-header-icon');
+            const button = document.getElementById('cloud-open-btn');
+            if (!icon || !button) return;
+            const pending = cloudState.pending || localStorage.getItem(CLOUD_PENDING_KEY) === '1';
+            icon.className = cloudState.connected
+                ? (cloudState.conflict || pending ? 'fa-solid fa-cloud text-amber-300' : 'fa-solid fa-cloud text-emerald-300')
+                : 'fa-solid fa-cloud';
+            button.title = cloudState.conflict
+                ? 'Hay un conflicto de sincronización; abre para ver detalles'
+                : pending
+                    ? 'Hay cambios pendientes de sincronizar'
+                    : cloudState.connected
+                        ? 'Nube conectada'
+                        : 'Configurar sincronización en la nube';
+            button.setAttribute('aria-label', button.title);
+        }
+
+        function renderCloudModal() {
+            const connected = !!cloudState.connected;
+            document.getElementById('cloud-setup-panel').classList.toggle('hidden', connected);
+            document.getElementById('cloud-connected-panel').classList.toggle('hidden', !connected);
+            const status = document.getElementById('cloud-connected-status');
+            if (connected && status) {
+                const pending = localStorage.getItem(CLOUD_PENDING_KEY) === '1';
+                status.className = 'rounded-2xl border p-3 text-sm ' + (cloudState.conflict
+                    ? 'border-amber-500/40 bg-amber-500/10 text-amber-200'
+                    : pending
+                        ? 'border-amber-500/40 bg-amber-500/10 text-amber-200'
+                        : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200');
+                status.textContent = cloudState.conflict
+                    ? 'Conflicto de sincronización: otro dispositivo cambió los datos. No se han sobrescrito los datos de la nube. Descarga una copia local antes de resolverlo.'
+                    : pending
+                        ? 'Hay cambios locales pendientes de sincronizar. Pulsa «Sincronizar ahora» para reintentar.'
+                        : `Armario conectado. Última revisión conocida: ${cloudState.revision}.`;
+            }
+            updateCloudHeader();
+        }
+
+        function openCloudModal() {
+            document.getElementById('cloud-modal').classList.remove('hidden');
+            setCloudModalStatus('', 'info');
+            renderCloudModal();
+            if (!cloudState.connected) ensureCloudTurnstileWidget();
+        }
+
+        function closeCloudModal() {
+            document.getElementById('cloud-modal').classList.add('hidden');
+        }
+
+        function continueLocalOnly() {
+            localStorage.setItem(CLOUD_DISMISSED_KEY, '1');
+            closeCloudModal();
+        }
+
+        function ensureCloudTurnstileWidget(retries = 0) {
+            if (cloudState.connected || cloudTurnstileWidgetId !== null) return;
+            if (!window.turnstile || typeof window.turnstile.render !== 'function') {
+                if (retries < 40) setTimeout(() => ensureCloudTurnstileWidget(retries + 1), 250);
+                else setCloudModalStatus('No se ha podido cargar la comprobación de Cloudflare. Comprueba la conexión y vuelve a abrir el menú Nube.', 'error');
+                return;
+            }
+            const container = document.getElementById('cloud-turnstile-widget');
+            if (!container || document.getElementById('cloud-modal').classList.contains('hidden')) return;
+            try {
+                cloudTurnstileWidgetId = window.turnstile.render(container, {
+                    sitekey: CLOUD_TURNSTILE_SITE_KEY,
+                    action: 'register',
+                    theme: 'dark',
+                    callback: token => {
+                        cloudTurnstileToken = token || '';
+                        document.getElementById('cloud-create-btn').disabled = !cloudTurnstileToken;
+                        setCloudModalStatus(cloudTurnstileToken ? 'Comprobación completada. Ya puedes crear el armario.' : '', 'success');
+                    },
+                    'expired-callback': () => {
+                        cloudTurnstileToken = '';
+                        document.getElementById('cloud-create-btn').disabled = true;
+                        setCloudModalStatus('La comprobación ha caducado. Completa Turnstile de nuevo.', 'error');
+                    },
+                    'error-callback': () => {
+                        cloudTurnstileToken = '';
+                        document.getElementById('cloud-create-btn').disabled = true;
+                        setCloudModalStatus('Turnstile no ha podido cargarse. Comprueba la conexión e inténtalo de nuevo.', 'error');
+                    }
+                });
+            } catch (error) {
+                console.error('No se pudo crear el widget Turnstile:', error);
+                setCloudModalStatus('No se pudo mostrar la comprobación de seguridad.', 'error');
+            }
+        }
+
+        function saveCloudCredentials(data) {
+            cloudState.token = data.accessToken;
+            cloudState.workspaceId = data.workspaceId;
+            cloudState.revision = 0;
+            cloudState.connected = true;
+            cloudState.conflict = false;
+            localStorage.setItem(CLOUD_TOKEN_KEY, data.accessToken);
+            localStorage.setItem(CLOUD_WORKSPACE_KEY, data.workspaceId);
+            localStorage.setItem(CLOUD_REVISION_KEY, '0');
+            localStorage.removeItem(CLOUD_PENDING_KEY);
+            updateCloudHeader();
+        }
+
+        function normalizeCloudStores(remote) {
+            const normalizeId = (value, label) => {
+                const n = Number(value);
+                if (!Number.isSafeInteger(n) || n <= 0) throw new Error(`La API ha devuelto un identificador incompatible en ${label}. Se ha detenido la carga para no mezclar datos.`);
+                return n;
+            };
+            const folders = (remote.folders || []).map(row => ({
+                ...row,
+                id: normalizeId(row.id, 'carpetas'),
+                createdAt: Number(row.createdAt || Date.now()),
+                coverImage: row.coverImage || null
+            }));
+            const items = (remote.items || []).map(row => ({
+                ...row,
+                id: normalizeId(row.id, 'prendas'),
+                folderId: normalizeId(row.folderId, 'carpeta de una prenda'),
+                createdAt: Number(row.createdAt || Date.now())
+            }));
+            const outfits = (remote.outfits || []).map(row => ({
+                ...row,
+                id: normalizeId(row.id, 'outfits'),
+                createdAt: Number(row.createdAt || Date.now()),
+                coverImage: row.coverImage || null,
+                itemIds: [...new Set((Array.isArray(row.itemIds) ? row.itemIds : []).map(id => normalizeId(id, 'prendas de un outfit')))]
+            }));
+            const folderIds = new Set(folders.map(row => row.id));
+            const itemIds = new Set(items.map(row => row.id));
+            if (items.some(row => !folderIds.has(row.folderId))) throw new Error('La nube contiene una prenda sin carpeta válida. Se ha detenido la carga para proteger los datos.');
+            if (outfits.some(row => row.itemIds.some(id => !itemIds.has(id)))) throw new Error('La nube contiene un outfit que apunta a una prenda inexistente. Se ha detenido la carga para proteger los datos.');
+            return { folders, items, outfits };
+        }
+
+        async function applyRemoteArmory(remote) {
+            const local = normalizeCloudStores(remote);
+            cloudState.hydrating = true;
+            try {
+                await replaceDatabaseStores(local);
+            } finally {
+                cloudState.hydrating = false;
+            }
+            cloudState.revision = Number(remote.revision || 0);
+            localStorage.setItem(CLOUD_REVISION_KEY, String(cloudState.revision));
+            localStorage.removeItem(CLOUD_PENDING_KEY);
+            cloudState.pending = false;
+            cloudState.conflict = false;
+            cloudState.connected = true;
+            renderCurrentViewAfterCloudRefresh();
+            updateCloudHeader();
+        }
+
+        function renderCurrentViewAfterCloudRefresh() {
+            if (!db) return;
+            if (currentFolderId) {
+                const tx = db.transaction('folders', 'readonly');
+                const req = tx.objectStore('folders').get(Number(currentFolderId));
+                req.onsuccess = () => {
+                    const folder = req.result;
+                    if (folder) loadFolderItems(folder.id, folder.name);
+                    else showMainSection('folders');
+                    loadFoldersView();
+                };
+            } else if (currentOutfitId) {
+                const tx = db.transaction('outfits', 'readonly');
+                const req = tx.objectStore('outfits').get(Number(currentOutfitId));
+                req.onsuccess = () => {
+                    const outfit = req.result;
+                    if (outfit) loadOutfitItems(outfit.id);
+                    else showMainSection('outfits');
+                    loadOutfitsView();
+                };
+            } else {
+                if (currentMainSection === 'outfits') loadOutfitsView();
+                else loadFoldersView();
+            }
+        }
+
+        async function initializeCloudConnection() {
+            cloudState.token = localStorage.getItem(CLOUD_TOKEN_KEY) || '';
+            cloudState.workspaceId = localStorage.getItem(CLOUD_WORKSPACE_KEY) || '';
+            cloudState.revision = Number(localStorage.getItem(CLOUD_REVISION_KEY) || 0);
+            const pending = localStorage.getItem(CLOUD_PENDING_KEY) === '1';
+            cloudState.pending = pending;
+
+            if (!cloudState.token) {
+                checkUrlParamsAndLoad();
+                updateCloudHeader();
+                if (localStorage.getItem(CLOUD_DISMISSED_KEY) !== '1') openCloudModal();
+                return;
+            }
+
+            try {
+                const remote = await cloudRequest('/api/v1/armory');
+                cloudState.connected = true;
+                if (pending) {
+                    if (Number(remote.revision || 0) !== cloudState.revision) {
+                        cloudState.conflict = true;
+                        setCloudModalStatus('Hay cambios locales y cambios más recientes en la nube. No se ha sobrescrito ninguno; descarga una copia local antes de resolver el conflicto.', 'error');
+                    } else {
+                        await syncCloudNow(false);
+                        if (!cloudState.conflict && localStorage.getItem(CLOUD_PENDING_KEY) !== '1') {
+                            const refreshed = await cloudRequest('/api/v1/armory');
+                            await applyRemoteArmory(refreshed);
+                        }
+                    }
+                } else {
+                    await applyRemoteArmory(remote);
+                }
+            } catch (error) {
+                console.error('No se pudo iniciar la sincronización con la nube:', error);
+                if (error.status === 401) {
+                    localStorage.removeItem(CLOUD_TOKEN_KEY);
+                    localStorage.removeItem(CLOUD_WORKSPACE_KEY);
+                    localStorage.removeItem(CLOUD_REVISION_KEY);
+                    cloudState.token = '';
+                    cloudState.workspaceId = '';
+                    cloudState.connected = false;
+                }
+                setCloudModalStatus(error.message || 'No se ha podido conectar con la nube. Tus datos locales no se han borrado.', 'error');
+            }
+
+            checkUrlParamsAndLoad();
+            renderCloudModal();
+            updateCloudHeader();
+            if (!cloudState.connected && localStorage.getItem(CLOUD_DISMISSED_KEY) !== '1') openCloudModal();
+            if (cloudState.connected && cloudState.conflict) openCloudModal();
+        }
+
+        async function cloudCreateWorkspace() {
+            if (!cloudTurnstileToken || cloudState.connected) return;
+            const button = document.getElementById('cloud-create-btn');
+            button.disabled = true;
+            button.textContent = 'Creando armario…';
+            try {
+                const localStores = await readAllDatabaseStores();
+                const created = await cloudRequest('/api/v1/workspaces', {
+                    method: 'POST', auth: false,
+                    body: { turnstileToken: cloudTurnstileToken }
+                });
+                saveCloudCredentials(created);
+                // Marcar los datos como pendientes ANTES de enviarlos: si la conexión se corta, no se borrarán al reabrir.
+                cloudState.pending = true;
+                localStorage.setItem(CLOUD_PENDING_KEY, '1');
+                // Enviar el contenido actual de este navegador una sola vez al nuevo armario.
+                const snapshot = buildCloudSnapshot(localStores, 0);
+                const pushed = await cloudRequest('/api/v1/armory', {
+                    method: 'PUT', body: snapshot
+                });
+                cloudState.revision = Number(pushed.revision || 1);
+                localStorage.setItem(CLOUD_REVISION_KEY, String(cloudState.revision));
+                localStorage.removeItem(CLOUD_PENDING_KEY);
+                cloudState.connected = true;
+                cloudState.pending = false;
+                cloudState.conflict = false;
+                localStorage.removeItem(CLOUD_DISMISSED_KEY);
+                const remote = await cloudRequest('/api/v1/armory');
+                await applyRemoteArmory(remote);
+                closeCloudModal();
+                setCloudModalStatus('', 'info');
+                checkUrlParamsAndLoad();
+                alert(`Armario en la nube creado correctamente. Se han sincronizado ${localStores.folders.length} carpetas, ${localStores.items.length} prendas y ${localStores.outfits.length} outfits.`);
+            } catch (error) {
+                console.error('No se pudo crear el armario en la nube:', error);
+                cloudState.connected = !!cloudState.token;
+                renderCloudModal();
+                setCloudModalStatus(error.message || 'No se pudo crear el armario. Los datos locales se mantienen.', 'error');
+            } finally {
+                button.disabled = !cloudTurnstileToken;
+                button.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i>Crear armario y copiar mis datos';
+            }
+        }
+
+        function buildCloudSnapshot(stores, revision) {
+            return {
+                revision: Number(revision || 0),
+                folders: (stores.folders || []).map(folder => ({
+                    id: Number(folder.id), name: folder.name,
+                    createdAt: Number(folder.createdAt || Date.now()),
+                    coverImage: folder.coverImage || null
+                })),
+                items: (stores.items || []).map(item => ({
+                    id: Number(item.id), folderId: Number(item.folderId), title: item.title,
+                    url: item.url, image: item.image,
+                    createdAt: Number(item.createdAt || Date.now())
+                })),
+                outfits: (stores.outfits || []).map(outfit => ({
+                    id: Number(outfit.id), name: outfit.name,
+                    createdAt: Number(outfit.createdAt || Date.now()),
+                    coverImage: outfit.coverImage || null,
+                    itemIds: [...new Set((Array.isArray(outfit.itemIds) ? outfit.itemIds : []).map(Number))]
+                }))
+            };
+        }
+
+        async function cloudRedeemPairingCode() {
+            if (cloudState.connected) return;
+            const input = document.getElementById('cloud-pairing-code-input');
+            const code = input.value.trim();
+            if (!code) {
+                setCloudModalStatus('Escribe el código temporal que has generado en el otro dispositivo.', 'error');
+                return;
+            }
+            if (!confirm('Al vincular este dispositivo, su contenido local será sustituido por el armario remoto. Si necesitas conservarlo, cancela y descarga antes una copia JSON. ¿Quieres continuar?')) return;
+            try {
+                const local = await readAllDatabaseStores();
+                const hasLocalContent = local.items.length > 0 || local.outfits.length > 0 || local.folders.some(folder => folder.name !== 'Todos' || !!folder.coverImage);
+                if (hasLocalContent) {
+                    downloadBackupEnvelope(buildBackupEnvelope(local), 'mi-armario-antes-de-vincular');
+                }
+                const result = await cloudRequest('/api/v1/pairing/redeem', {
+                    method: 'POST', auth: false, body: { code }
+                });
+                saveCloudCredentials(result);
+                const remote = await cloudRequest('/api/v1/armory');
+                await applyRemoteArmory(remote);
+                localStorage.removeItem(CLOUD_DISMISSED_KEY);
+                input.value = '';
+                closeCloudModal();
+                checkUrlParamsAndLoad();
+                alert('Dispositivo vinculado. Este dispositivo ya consulta el mismo armario que el dispositivo original.');
+            } catch (error) {
+                console.error('No se pudo vincular el dispositivo:', error);
+                setCloudModalStatus(error.message || 'No se pudo utilizar el código. Genera uno nuevo desde el dispositivo principal.', 'error');
+            }
+        }
+
+        async function cloudGeneratePairingCode() {
+            if (!cloudState.connected) return;
+            try {
+                const result = await cloudRequest('/api/v1/pairing', { method: 'POST', body: {} });
+                document.getElementById('cloud-pairing-code-display').textContent = result.code;
+                document.getElementById('cloud-pairing-result').classList.remove('hidden');
+                setCloudModalStatus('Código creado. Compártelo únicamente con el dispositivo que quieras vincular.', 'success');
+            } catch (error) {
+                setCloudModalStatus(error.message || 'No se pudo crear un código de vinculación.', 'error');
+            }
+        }
+
+        async function copyCloudPairingCode() {
+            const code = document.getElementById('cloud-pairing-code-display').textContent.trim();
+            if (!code) return;
+            try {
+                await navigator.clipboard.writeText(code);
+                setCloudModalStatus('Código copiado.', 'success');
+            } catch (_) {
+                setCloudModalStatus('No se pudo copiar automáticamente. Mantén pulsado el código y cópialo manualmente.', 'info');
+            }
+        }
+
+        function scheduleCloudSync() {
+            if (!cloudState.connected || cloudState.hydrating) return;
+            cloudState.pending = true;
+            cloudMutationGeneration++;
+            localStorage.setItem(CLOUD_PENDING_KEY, '1');
+            updateCloudHeader();
+            if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
+            cloudSyncTimer = setTimeout(() => cloudSyncNow(false), 900);
+        }
+
+        async function cloudSyncNow(showResult = true) {
+            if (!cloudState.connected || cloudState.hydrating) {
+                if (showResult) openCloudModal();
+                return false;
+            }
+            if (cloudState.conflict) {
+                setCloudModalStatus('Hay un conflicto pendiente. No se enviarán cambios hasta que guardemos una copia local y resolvamos qué versión conservar.', 'error');
+                renderCloudModal();
+                return false;
+            }
+            if (cloudState.syncing) return cloudSyncChain;
+            cloudState.syncing = true;
+            const generation = cloudMutationGeneration;
+            const operation = async () => {
+                try {
+                    const localStores = await readAllDatabaseStores();
+                    const snapshot = buildCloudSnapshot(localStores, cloudState.revision);
+                    const result = await cloudRequest('/api/v1/armory', {
+                        method: 'PUT', body: snapshot
+                    });
+                    cloudState.revision = Number(result.revision || (cloudState.revision + 1));
+                    localStorage.setItem(CLOUD_REVISION_KEY, String(cloudState.revision));
+                    cloudState.conflict = false;
+                    if (generation === cloudMutationGeneration) {
+                        localStorage.removeItem(CLOUD_PENDING_KEY);
+                        cloudState.pending = false;
+                    } else {
+                        localStorage.setItem(CLOUD_PENDING_KEY, '1');
+                        cloudState.pending = true;
+                        if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
+                        cloudSyncTimer = setTimeout(() => cloudSyncNow(false), 300);
+                    }
+                    if (showResult) setCloudModalStatus('Sincronización completada correctamente.', 'success');
+                    return true;
+                } catch (error) {
+                    if (error.status === 409 || error.code === 'REVISION_CONFLICT') {
+                        cloudState.conflict = true;
+                    }
+                    cloudState.pending = localStorage.getItem(CLOUD_PENDING_KEY) === '1';
+                    if (showResult || cloudState.conflict) setCloudModalStatus(error.message || 'No se pudieron sincronizar los cambios. Tus datos locales se conservan.', 'error');
+                    console.error('Error al sincronizar el armario:', error);
+                    return false;
+                } finally {
+                    cloudState.syncing = false;
+                    renderCloudModal();
+                }
+            };
+            cloudSyncChain = cloudSyncChain.then(operation, operation);
+            return cloudSyncChain;
+        }
+
+        async function refreshCloudIfChanged() {
+            if (!cloudState.connected || cloudState.hydrating || cloudState.syncing || localStorage.getItem(CLOUD_PENDING_KEY) === '1') return;
+            // No reemplazar datos mientras se está editando un formulario.
+            const modalIds = ['add-modal','new-folder-modal','edit-folder-modal','outfit-editor-modal','add-items-to-outfit-modal','item-detail-modal','backup-modal','cloud-modal'];
+            if (modalIds.some(id => !document.getElementById(id)?.classList.contains('hidden'))) return;
+            try {
+                const remote = await cloudRequest('/api/v1/armory');
+                if (Number(remote.revision || 0) !== cloudState.revision) await applyRemoteArmory(remote);
+            } catch (error) {
+                console.warn('No se pudo refrescar el armario desde la nube:', error.message || error);
+            }
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') setTimeout(refreshCloudIfChanged, 350);
+        });
+        window.addEventListener('focus', () => setTimeout(refreshCloudIfChanged, 350));
+
+        // Arrancar la base de datos de inmediato
+        initAppDatabase();
+    </script>
+</body>
+</html>
