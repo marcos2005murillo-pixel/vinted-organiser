@@ -2392,10 +2392,14 @@ Esto sustituirá todos los datos que hay ahora en este navegador. Antes se inten
                         document.getElementById('cloud-create-btn').disabled = true;
                         setCloudModalStatus('La comprobación ha caducado. Completa Turnstile de nuevo.', 'error');
                     },
-                    'error-callback': () => {
+                    'error-callback': (errorCode) => {
+                        console.error('Turnstile error code:', errorCode);
                         cloudTurnstileToken = '';
                         document.getElementById('cloud-create-btn').disabled = true;
-                        setCloudModalStatus('Turnstile no ha podido cargarse. Comprueba la conexión e inténtalo de nuevo.', 'error');
+                        setCloudModalStatus(
+                            'Error de Cloudflare: ' + (errorCode || 'sin código') + '.',
+                            'error'
+                        );
                     }
                 });
             } catch (error) {
